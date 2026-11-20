@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "serve": "node serve.mjs"
   },
   "devDependencies": {
     "vite": "^6.4.6"

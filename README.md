@@ -13,25 +13,32 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Try it on the frame over USB without deploying:
+## Hosting on the home network
+
+The app is served from a Mac on the same Wi-Fi as the frame; it is not on the internet.
 
 ```sh
-npm run build && npm run preview -- --port 4173
-adb reverse tcp:4173 tcp:4173
-adb shell am start -n com.wesbos.homehq/.MainActivity --es url http://localhost:4173/
+npm run build                 # writes dist/, including version.json
+scripts/install-server.sh     # serves dist/ on port 8080 at every login (log: ~/Library/Logs/frame-app.log)
 ```
 
-## Deploy
-
-Every push to `main` builds and deploys to GitHub Pages
-(`.github/workflows/deploy.yml`). The app checks `version.json` every 5 minutes and reloads
-itself when a new version is live, so the frame updates without touching it.
-
-Point the frame at the deployed app once:
+Point the frame at the Mac once (use the Mac's current IP):
 
 ```sh
-adb shell am start -n com.wesbos.homehq/.MainActivity --es url https://wojtas399.github.io/frame-app/
+adb shell am start -n com.wesbos.homehq/.MainActivity --es url http://192.168.100.6:8080/
 ```
+
+**Updating:** run `npm run build`. The server picks up the new `dist/` straight away, and the
+app checks `version.json` every 5 minutes and reloads itself when it changes.
+
+**Keep in mind:**
+
+- The Mac must be awake. While it sleeps the frame keeps showing the last page it loaded,
+  but cannot reload.
+- The frame uses the Mac's IP address (Android 6 cannot resolve `.local` names). Reserve the
+  IP for the Mac in the router's DHCP settings so it doesn't change.
+- `scripts/install-server.sh --uninstall` removes the background service. If you switch Node
+  versions with nvm, run the install script again.
 
 ## Settings
 
