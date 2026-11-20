@@ -1,0 +1,206 @@
+/* Designed for the 1280×800 frame; sizes use vw/vh so it scales on other screens. */
+:root {
+  --bg: #0b0f17;
+  --panel: #141a26;
+  --text: #f1f4f9;
+  --muted: #8a94a8;
+  --accent: #7cc4ff;
+  --sun: #ffc94d;
+  --moon: #d9def0;
+  --cloud: #c3cbdb;
+  --rain: #5aaeff;
+  --snow: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: none;
+}
+
+.frame {
+  height: 100vh;
+  padding: 3.5vh 3vw 2.5vh;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  grid-template-rows: 1fr auto auto;
+  gap: 2.5vh 2.5vw;
+}
+
+/* Clock */
+.clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.date {
+  font-size: 3.3vw;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.time {
+  font-size: 15.5vw;
+  line-height: 1;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  margin-left: -0.6vw;
+}
+
+.seconds {
+  font-size: 4vw;
+  color: var(--muted);
+  margin-left: 1vw;
+  letter-spacing: 0;
+}
+
+.place {
+  font-size: 2vw;
+  color: var(--muted);
+  margin-top: 0.5vh;
+}
+
+/* Current weather */
+.now {
+  background: var(--panel);
+  border-radius: 2vw;
+  padding: 2.5vh 2.2vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.now-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5vw;
+}
+
+.now-main .icon {
+  width: 9vw;
+  height: 9vw;
+}
+
+.now-temp {
+  font-size: 8.5vw;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.now-label {
+  font-size: 2.4vw;
+  margin-top: 1vh;
+}
+
+.now-range {
+  font-size: 1.8vw;
+  color: var(--muted);
+  margin-top: 0.4vh;
+}
+
+.now-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2vh 1.5vw;
+  margin-top: 2.2vh;
+}
+
+.now-details dt {
+  font-size: 1.25vw;
+  color: var(--muted);
+}
+
+.now-details dd {
+  font-size: 1.9vw;
+}
+
+/* Hourly and daily strips */
+.hours,
+.days {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1vw;
+}
+
+.hour,
+.day {
+  flex: 1;
+  background: var(--panel);
+  border-radius: 1.4vw;
+  padding: 1.2vh 0.5vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3vh;
+}
+
+.hour .icon {
+  width: 3.6vw;
+  height: 3.6vw;
+}
+
+.day .icon {
+  width: 4.4vw;
+  height: 4.4vw;
+}
+
+.hour-time,
+.day-name {
+  font-size: 1.5vw;
+  color: var(--muted);
+}
+
+.day-name {
+  color: var(--text);
+  font-size: 1.7vw;
+}
+
+.hour-temp {
+  font-size: 2vw;
+}
+
+.day-temps {
+  font-size: 2vw;
+  display: flex;
+  gap: 0.8vw;
+}
+
+.lo {
+  color: var(--muted);
+}
+
+.rain {
+  font-size: 1.2vw;
+  color: var(--muted);
+}
+
+.rain.likely {
+  color: var(--rain);
+}
+
+.status {
+  position: fixed;
+  right: 1.5vw;
+  bottom: 0.6vh;
+  font-size: 0.9vw;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.status.error {
+  color: #ff9b7a;
+  opacity: 1;
+}

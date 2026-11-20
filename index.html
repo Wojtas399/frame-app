@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Frame</title>
+  </head>
+  <body>
+    <main class="frame">
+      <section class="clock">
+        <div class="date" id="date"></div>
+        <div class="time"><span id="time"></span><span class="seconds" id="seconds"></span></div>
+        <div class="place" id="place"></div>
+      </section>
+
+      <section class="now" id="now" aria-live="polite"></section>
+
+      <section class="hours" id="hours"></section>
+
+      <section class="days" id="days"></section>
+
+      <div class="status" id="status"></div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
