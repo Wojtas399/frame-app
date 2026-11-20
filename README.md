@@ -13,6 +13,19 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
+## Debug on the frame
+
+With the frame on USB and on the same Wi-Fi as the Mac:
+
+```sh
+npm run frame
+```
+
+This points the frame at the Mac's Vite dev server: saving a file updates the frame within
+seconds. Chrome DevTools for the page are at `chrome://inspect/#devices` in Chrome on the Mac
+(console, network, element inspector, screencast). Ctrl+C stops the server; the frame keeps the
+last page until it is pointed somewhere else.
+
 ## Hosting on the home network
 
 The app is served from a Mac on the same Wi-Fi as the frame; it is not on the internet.
