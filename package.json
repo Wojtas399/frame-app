@@ -7,7 +7,6 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "serve": "node serve.mjs",
     "frame": "scripts/debug-on-frame.sh"
   },
   "devDependencies": {
