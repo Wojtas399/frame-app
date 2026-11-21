@@ -1,0 +1,28 @@
+[
+  {
+    "name": "retry timer dropped after a failed request",
+    "patch": [{ "file": "main.js", "find": "weatherTimer = setTimeout(refreshWeather, RETRY_MS);", "replace": "" }],
+    "expect": { "KeepsRefreshing": "fail" }
+  },
+  {
+    "name": "15 min timer dropped after a successful request",
+    "patch": [{ "file": "main.js", "find": "weatherTimer = setTimeout(refreshWeather, WEATHER_EVERY_MS);", "replace": "" }],
+    "expect": { "KeepsRefreshing": "fail" }
+  },
+  {
+    "name": "fixed variant: clear the old timer before scheduling a new one",
+    "patch": [
+      { "file": "main.js", "find": "weatherTimer = setTimeout(refreshWeather, WEATHER_EVERY_MS);", "replace": "clearTimeout(weatherTimer); weatherTimer = setTimeout(refreshWeather, WEATHER_EVERY_MS);" },
+      { "file": "main.js", "find": "weatherTimer = setTimeout(refreshWeather, RETRY_MS);", "replace": "clearTimeout(weatherTimer); weatherTimer = setTimeout(refreshWeather, RETRY_MS);" }
+    ],
+    "expect": { "KeepsRefreshing": "pass", "OneRefreshTimer": "pass" }
+  },
+  {
+    "name": "fixed variant: ignore a response when a newer request was started",
+    "patch": [
+      { "file": "main.js", "find": "let weatherTimer;", "replace": "let weatherTimer; let latestRequest = 0;" },
+      { "file": "main.js", "find": "    weather = await fetchWeather(config);", "replace": "    const mine = ++latestRequest; const fresh = await fetchWeather(config); if (mine !== latestRequest) return; weather = fresh;" }
+    ],
+    "expect": { "KeepsRefreshing": "pass", "NewestForecastShown": "pass" }
+  }
+]
