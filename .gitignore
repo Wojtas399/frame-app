@@ -1,3 +1,8 @@
 node_modules/
 dist/
 .DS_Store
+.env
+.env.*
+*.pem
+*.key
+.claude/settings.local.json
