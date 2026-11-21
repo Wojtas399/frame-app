@@ -67,25 +67,25 @@ A counterexample reads as numbered steps in the code's terms: which request star
 
 ## Coverage record
 
-Sync commit: `247394160e5e2b2ef046e8c7d524018b754ba097`
+Sync commit: `498306599731259d57ac135e2e0036f23ccd77f2`
 
 Covered code, by name, in `src/main.js`:
 
 - `refreshWeather`, `weatherTimer`, `WEATHER_EVERY_MS`, `RETRY_MS`
 - `loadCached`, `saveCached`, `CACHE_KEY`, and `let weather = loadCached()`
-- `setStatus`, `renderWeather` (the checker reads `.now-temp` back as the forecast shown)
+- `setStatus`, `renderClock`, `renderWeather` (the checker reads `.now-temp` back as the forecast shown)
 - the startup calls `renderWeather(); refreshWeather();` and `document.addEventListener('click', refreshWeather)`
 
 Also covered: `fetchWeather` in `src/weather.js` (the `res.ok` check and `res.json()`), and `config.lat`/`config.lon` in `src/config.js`, which the cache match uses.
 
-To see whether a change touches this, run `git diff 247394160e5e2b2ef046e8c7d524018b754ba097 -- src/main.js src/weather.js src/config.js`. A diff in any name above means rerun the check and reread the model notes. Only move the sync commit forward after you have confirmed that the model notes and the stand-ins in `check.mjs` still describe the code at the new commit, and that both commands give the expected result.
+To see whether a change touches this, run `git diff 498306599731259d57ac135e2e0036f23ccd77f2 -- src/main.js src/weather.js src/config.js`. A diff in any name above means rerun the check and reread the model notes. Only move the sync commit forward after you have confirmed that the model notes and the stand-ins in `check.mjs` still describe the code at the new commit, and that both commands give the expected result.
 
 ## Scope and assumptions
 
 - **Bounded.** The check covers up to 4 Open-Meteo requests from page load (`--max` raises the bound). Every finding so far shows up within 3 requests.
 - **Untimed.** Any pending timer may fire next, whatever its delay. This over-approximates the real clock. It is why `OneRefreshTimer` reports a state that the real timers usually merge out of.
 - **Every request eventually settles (an assumption).** `fetchWeather` has no timeout. If the WebView ever leaves a request hanging forever, the loop stops until a tap, and this check cannot see that.
-- **Out of scope:** the 1 s clock tick, the 5-minute `checkVersion` reload (`version.json` is held constant), rendering details beyond which forecast is shown, malformed Open-Meteo bodies, and `localStorage` that throws.
+- **Out of scope:** the calendar (`refreshCalendar` and its timer, which the sandbox never starts because `location.search` has no `cal-` param), the 1 s clock tick, the 5-minute `checkVersion` reload (`version.json` is held constant), rendering details beyond which forecast is shown, malformed Open-Meteo bodies, and `localStorage` that throws.
 - The DOM, timers and fetch are stand-ins. A pass says the logic in `main.js` is right under these semantics, not that WebView 107 behaves the same. To see the real app, use the `verify-frame-app` skill.
 
 ## Files

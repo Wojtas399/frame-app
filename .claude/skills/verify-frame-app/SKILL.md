@@ -1,11 +1,11 @@
 ---
 name: verify-frame-app
-description: Launch and drive the frame-app clock and weather dashboard (a single-page web app for a 1280x800 photo frame) in an isolated headless Chrome, and capture screenshots, page text, and network and console logs as proof. Use it to confirm a change to the clock, weather panels, URL settings, tap-to-refresh, offline fallback or auto-update works in the real app, not just in a build.
+description: Launch and drive the frame-app clock, weather and calendar dashboard (a single-page web app for a 1280x800 photo frame) in an isolated headless Chrome, and capture screenshots, page text, and network and console logs as proof. Use it to confirm a change to the clock, weather panels, calendar view, URL settings, tap-to-refresh, offline fallback or auto-update works in the real app, not just in a build.
 ---
 
 # Verify frame-app
 
-frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). Its only user input is a tap anywhere (refreshes the weather) and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
+frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a 7-day calendar view, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the calendar's view pill and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
 
 All helpers live in `.claude/skills/verify-frame-app/scripts/`. Run them from the repo root:
 
@@ -50,7 +50,7 @@ Commands run in order over one CDP session:
 | `wait <js-expr> [ms]` | poll until truthy (default 10000 ms). Use this, not `sleep`, to wait for state. Wait for a change, not for a state that was already true |
 | `eval <js-expr>` | print the JSON value. For reading DOM state only, never to call app functions |
 | `tap <css>` | real mouse press and release at the element's centre (the user's tap) |
-| `text [file]` | `innerText` of the whole dashboard |
+| `text [file]` | `innerText` of the page, which is the visible view |
 | `screenshot <file>` | 1280x800 PNG |
 | `offline on\|off` | emulate the frame losing Wi-Fi |
 | `block <pattern>` | fail matching requests, e.g. `'*api.open-meteo.com*'` |
@@ -66,6 +66,12 @@ Stable handles (ids from `index.html` and classes `src/main.js` renders):
 - `#days .day` (5 of them, starting tomorrow): `.day-name`, `.day-temps .hi`, `.day-temps .lo`, `.rain`
 - `#status`: `Updated HH:MM`, `Offline · showing HH:MM data` or `Waiting for weather…`. It has class `error` when not updated
 - localStorage key `weather-v1`: the cached Open-Meteo response
+- `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without a `cal-` param
+- `#cal-accounts .cal-option[data-account=private|business|all]`: the selector (only with both params). The selected one has class `on`
+- `#cal-date`, `#cal-time`: the calendar header
+- `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its account colour
+- `#cal-status`: `Updated HH:MM`, `Offline · showing HH:MM data`, `<Account> calendar failed[ · showing HH:MM data]` or `Waiting for calendar…`. It has class `error` when not updated
+- localStorage keys `calendar-v1` (the last good feed per account) and `calendar-view-v1` (`{ view, selected }`)
 
 Example (tap to refresh, then the frame loses Wi-Fi):
 
@@ -84,7 +90,7 @@ The feature map in [`features/README.md`](features/README.md) has the recipe for
 Everything goes to `$RUN/evidence/`, which survives cleanup:
 
 - your screenshots and `text` dumps, in a subfolder per feature
-- `network.log`: every Open-Meteo and `version.json` request, its status, and any failure (`net::ERR_INTERNET_DISCONNECTED`, `blockedReason`). Appended automatically
+- `network.log`: every Open-Meteo, `version.json` and calendar feed request, its status, and any failure (`net::ERR_INTERNET_DISCONNECTED`, `blockedReason`). Appended automatically
 - `console.log`: console messages and uncaught page errors. Appended automatically
 
 Proof standards:
