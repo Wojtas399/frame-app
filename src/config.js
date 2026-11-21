@@ -8,3 +8,8 @@ export const config = {
   place: params.get('place') ?? 'Warsaw',
   locale: params.get('locale') ?? 'en-GB',
 };
+
+export const accounts = [
+  { id: 'private', label: 'Private', color: '#7cc4ff', url: params.get('cal-private') },
+  { id: 'business', label: 'Business', color: '#ffad5a', url: params.get('cal-business') },
+].filter((a) => a.url);
