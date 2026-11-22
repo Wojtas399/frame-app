@@ -243,6 +243,8 @@ body[data-view] .view-toggle {
 
 .view-toggle,
 .cal-option,
+.cal-span,
+.cal-nav button,
 .event-close,
 .location-search,
 .location-result {
@@ -269,8 +271,10 @@ body[data-view] .view-toggle {
   height: 5.5vh;
   display: flex;
   justify-content: flex-end;
+  gap: 1vw;
 }
 
+.cal-spans,
 .cal-accounts {
   display: flex;
   gap: 0.3vw;
@@ -283,7 +287,8 @@ body[data-view] .view-toggle {
   display: none;
 }
 
-.cal-option {
+.cal-option,
+.cal-span {
   display: flex;
   align-items: center;
   gap: 0.6vw;
@@ -315,6 +320,11 @@ body[data-view] .view-toggle {
   background: var(--bg);
 }
 
+.cal-span.on {
+  background: var(--text);
+  color: var(--bg);
+}
+
 .cal-title {
   font-size: 3.3vw;
   color: var(--accent);
@@ -327,6 +337,36 @@ body[data-view] .view-toggle {
   color: var(--text);
   font-weight: 300;
   font-variant-numeric: tabular-nums;
+}
+
+.cal-nav {
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  gap: 0.3vw;
+  padding: 0.4vh 0.3vw;
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.cal-nav button {
+  height: 5vh;
+  min-width: 4.5vw;
+  padding: 0 1.4vw;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.4vw;
+}
+
+.cal-nav button[data-step='-1'],
+.cal-nav button[data-step='1'] {
+  font-size: 2.2vw;
+  line-height: 1;
+}
+
+.cal-nav button.off {
+  color: var(--muted);
 }
 
 .cal-days {
@@ -353,7 +393,7 @@ body[data-view] .view-toggle {
   text-align: center;
 }
 
-.cal-day:first-child .cal-day-name {
+.cal-day.today .cal-day-name {
   color: var(--accent);
 }
 
@@ -404,6 +444,167 @@ body[data-view] .view-toggle {
   text-align: center;
   font-size: 1.4vw;
   color: var(--muted);
+}
+
+.cal-days[data-span='month'] {
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.5vw;
+}
+
+.cal-weekday {
+  font-size: 1.2vw;
+  color: var(--muted);
+  text-align: center;
+}
+
+.cal-cell {
+  min-width: 0;
+  background: var(--panel);
+  border-radius: 0.8vw;
+  padding: 0.6vh 0.5vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vh;
+}
+
+.cal-cell.dim {
+  opacity: 0.45;
+}
+
+.cal-cell.today {
+  box-shadow: inset 0 0 0 0.2vw var(--accent);
+}
+
+.cal-cell-num {
+  font-size: 1.3vw;
+}
+
+.cal-cell.today .cal-cell-num {
+  color: var(--accent);
+}
+
+.cal-cell-events {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vh;
+}
+
+.cal-cell .cal-chip,
+.cal-cell .cal-event,
+.cal-more {
+  font-size: 1vw;
+}
+
+.cal-cell .cal-chip {
+  padding: 0.1vh 0.4vw;
+  border-radius: 0.4vw;
+}
+
+.cal-cell .cal-event {
+  padding-left: 0.4vw;
+  border-left-width: 0.25vw;
+  -webkit-line-clamp: 1;
+}
+
+.cal-more {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.cal-days[data-span='day'] {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vh;
+}
+
+.cal-allday {
+  display: flex;
+  gap: 0.6vw;
+}
+
+.cal-allday:empty {
+  display: none;
+}
+
+.cal-allday .cal-chip {
+  min-width: 0;
+}
+
+.cal-timeline {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  border-radius: 1.4vw;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.cal-scroll {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.cal-track {
+  position: relative;
+}
+
+.cal-hour {
+  height: 7.5vh;
+  padding: 0.3vh 1vw;
+  border-top: 1px solid rgba(138, 148, 168, 0.2);
+  font-size: 1.1vw;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-hour:first-child {
+  border-top: 0;
+}
+
+.cal-blocks {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6vw;
+  right: 0.7vw;
+}
+
+.cal-block {
+  position: absolute;
+  min-height: 2.7vh;
+  padding: 0.1vh 0.6vw;
+  border-left: 0.35vw solid var(--c);
+  border-radius: 0.4vw;
+  background: #232a38;
+  font-size: 1.2vw;
+  line-height: 1.25;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.cal-block-place {
+  color: var(--muted);
+}
+
+.cal-timeline .cal-free {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .event-details {
@@ -535,4 +736,29 @@ body[data-view] .view-toggle {
 
 .location-note {
   padding: 1.8vh 0.4vw;
+}
+
+.day-preview {
+  width: 84vw;
+  height: 86vh;
+  margin: auto;
+  padding: 3vh 2.2vw;
+  border: 0;
+  border-radius: 1.4vw;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.day-preview[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+}
+
+.day-preview::backdrop {
+  background: rgba(11, 15, 23, 0.75);
+}
+
+.day-preview .event-close {
+  background: var(--panel);
 }

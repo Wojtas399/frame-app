@@ -38,6 +38,8 @@ const feeds = {
         location: 'ul. Floriańska 12, Kraków',
         description: `Bring the <b>X-ray</b> results.<br>Parking at the back gate.<ul><li>ID card</li><li>Insurance card</li></ul><img src=x onerror="window.__pwned = 1"><script>window.__pwned = 1</script>${'<p>More notes.</p>'.repeat(30)}`,
       },
+      timed('Haircut', -5, '17:00', '17:45'),
+      allDay('Book fair', -1, 3),
     ],
   },
   'business.json': {
@@ -48,6 +50,9 @@ const feeds = {
       allDay('Conference', 1, 2),
       ...Array.from({ length: 18 }, (_, i) => timed(`Interview ${i + 1}`, 4, hour(6 + i), hour(7 + i))),
       timed('Quarterly planning', 6, '13:00', '15:00'),
+      allDay('Offsite', -12, 2),
+      { ...timed('Budget review', 0, '14:00', '15:30'), location: 'Room 4.12' },
+      timed('Vendor call', 0, '14:30', '15:00'),
     ],
   },
   'malformed.json': { events: [{ title: 5, start: 'soon' }] },
