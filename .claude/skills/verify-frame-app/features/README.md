@@ -33,6 +33,7 @@ Each feature file has an H1 and a one-paragraph description, then four H2s in or
 - [Forecast strips](./forecast.md): 8 hourly and 5 daily tiles, rain-likely highlighting.
 - [Refresh and offline](./refresh-offline.md): tap to refresh, status line, offline fallback, cached start.
 - [URL settings](./url-settings.md): `lat`, `lon`, `place`, `locale` query params.
+- [Location](./location.md): tap the place name, search a city, and pick it as the weather location.
 - [Auto-update](./auto-update.md): the page reloads itself when a new build is deployed (preview mode only).
 - [Calendar](./calendar.md): the view pill, the Private, Business and All selector, 7 day columns, and the calendar's offline and failure statuses.
 
