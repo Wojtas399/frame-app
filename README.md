@@ -26,6 +26,17 @@ seconds. Chrome DevTools for the page are at `chrome://inspect/#devices` in Chro
 (console, network, element inspector, screencast). Ctrl+C stops the server; the frame keeps the
 last page until it is pointed somewhere else.
 
+To show the calendar, put the feed URLs (see [Calendar](#calendar)) in a `.env` file in the repo
+root. It is gitignored, so the URLs stay on this Mac:
+
+```sh
+CAL_PRIVATE=https://script.google.com/macros/s/…/exec
+CAL_BUSINESS=https://script.google.com/macros/s/…/exec
+```
+
+Leave out a line for an account you don't use. `npm run frame` adds them to the frame's URL as
+`cal-private` and `cal-business`.
+
 ## Settings
 
 URL query parameters override the defaults in `src/config.js`:
