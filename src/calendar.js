@@ -1,8 +1,9 @@
 import { t } from './config.js';
 
-export async function fetchFeed(url) {
+export async function fetchFeed(url, { from, days }) {
   const request = new URL(url, location.href);
-  request.searchParams.set('days', '8');
+  request.searchParams.set('from', from);
+  request.searchParams.set('days', days);
   const res = await fetch(request, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`Calendar request failed: ${res.status}`);
   const { events } = await res.json();
@@ -64,6 +65,23 @@ export function plainText(html) {
 }
 
 export const daysAhead = (today, n) => Array.from({ length: n }, (_, i) => addDays(today, i));
+
+const daysBetween = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
+const mondayOf = (key) => addDays(key, -((new Date(`${key}T00:00Z`).getUTCDay() + 6) % 7));
+
+// The whole weeks, Monday first, that hold today's month.
+export function monthDays(today) {
+  const [year, month] = today.split('-').map(Number);
+  const from = mondayOf(`${today.slice(0, 8)}01`);
+  const to = addDays(mondayOf(new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10)), 6);
+  return daysAhead(from, daysBetween(from, to) + 1);
+}
+
+// One fetch covers every span, so switching spans works offline.
+export function feedWindow(today) {
+  const month = monthDays(today);
+  return { from: month[0], days: daysBetween(month[0], later(month.at(-1), addDays(today, 6))) + 1 };
+}
 
 export function eventsOnDay(events, key) {
   return events.filter((e) => e.startDay <= key && key <= e.endDay).sort((a, b) => b.allDay - a.allDay || a.start - b.start);

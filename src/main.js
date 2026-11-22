@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, plainText, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, plainText, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -246,7 +246,8 @@ function calendarStatus(failed) {
 }
 
 async function refreshCalendar() {
-  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url)));
+  const range = feedWindow(dayKey(new Date(), timeZone()));
+  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url, range)));
   const failed = accounts.filter((a, i) => results[i].status === 'rejected');
   setTimeout(refreshCalendar, failed.length ? RETRY_MS : CALENDAR_EVERY_MS);
   results.forEach((r, i) => {
