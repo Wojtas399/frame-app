@@ -1,13 +1,36 @@
 // Defaults, overridable with URL query params, e.g.
 //   ?lat=50.06&lon=19.94&place=Kraków
+// A location picked on the frame (localStorage `location-v1`) beats both.
 import { STRINGS } from './strings.js';
 
 const params = new URLSearchParams(location.search);
+const LOCATION_KEY = 'location-v1';
 
-export const config = {
+function savedLocation() {
+  try {
+    const l = JSON.parse(localStorage.getItem(LOCATION_KEY));
+    return typeof l?.name === 'string' && Number.isFinite(l.lat) && Number.isFinite(l.lon) ? l : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLocation({ name, lat, lon }) {
+  try {
+    localStorage.setItem(LOCATION_KEY, JSON.stringify({ name, lat, lon }));
+  } catch {}
+}
+
+const place = savedLocation() ?? {
+  name: params.get('place') ?? 'Warsaw',
   lat: Number(params.get('lat') ?? 52.2297),
   lon: Number(params.get('lon') ?? 21.0122),
-  place: params.get('place') ?? 'Warsaw',
+};
+
+export const config = {
+  lat: place.lat,
+  lon: place.lon,
+  place: place.name,
   locale: params.get('locale') ?? 'en-GB',
 };
 
