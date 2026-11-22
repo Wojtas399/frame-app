@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, plainText, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -11,6 +11,7 @@ const CACHE_KEY = 'weather-v1';
 const CALENDAR_EVERY_MS = 10 * 60 * 1000;
 const FEEDS_KEY = 'calendar-v1';
 const PREFS_KEY = 'calendar-view-v1';
+const DETAILS_MS = 60 * 1000;
 
 const $ = (id) => document.getElementById(id);
 let weather = loadCached();
@@ -23,12 +24,13 @@ function fmt(options, date = new Date()) {
 }
 
 const hm = (date) => fmt({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }, date);
+const longDate = (date, zone = timeZone()) => fmt({ weekday: 'long', day: 'numeric', month: 'long', timeZone: zone }, date);
 
 function renderClock() {
   const now = new Date();
   $('time').textContent = $('cal-time').textContent = hm(now);
   $('seconds').textContent = fmt({ second: '2-digit' }, now).padStart(2, '0');
-  $('date').textContent = $('cal-date').textContent = fmt({ weekday: 'long', day: 'numeric', month: 'long' }, now);
+  $('date').textContent = $('cal-date').textContent = longDate(now);
 }
 
 const deg = (t) => `${Math.round(t)}°`;
@@ -174,18 +176,19 @@ const isLight = (hex) => {
 
 function eventHtml(e, key) {
   const c = e.color ?? colorOf[e.account];
-  const style = `style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'})"`;
-  if (e.allDay) return `<div class="cal-chip" ${style}>${escapeHtml(e.title)}</div>`;
+  const attrs = `data-event="${shown.indexOf(e)}" style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'})"`;
+  if (e.allDay) return `<div class="cal-chip" ${attrs}>${escapeHtml(e.title)}</div>`;
   const when = key === e.startDay ? hm(e.start) : key === e.endDay ? t.until(hm(e.end)) : t.allDay;
-  return `<div class="cal-event" ${style}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
+  return `<div class="cal-event" ${attrs}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
 }
 
 const zonedToday = () => `${timeZone()} ${dayKey(new Date(), timeZone())}`;
 let renderedFor;
+let shown = [];
 
 function renderCalendar() {
   renderedFor = zonedToday();
-  const events = selectEvents(
+  shown = selectEvents(
     accounts.flatMap((a) => (feeds[a.id] ? calEvents(feeds[a.id].events, a.id, timeZone()) : [])),
     prefs.selected,
   );
@@ -194,13 +197,44 @@ function renderCalendar() {
     .join('');
   $('cal-days').innerHTML = daysAhead(dayKey(new Date(), timeZone()), 7)
     .map((key, i) => {
-      const list = eventsOnDay(events, key);
+      const list = eventsOnDay(shown, key);
       return `<div class="cal-day">
         <div class="cal-day-name">${dayName(key, i)}</div>
         <div class="cal-events">${list.length ? list.map((e) => eventHtml(e, key)).join('') : `<div class="cal-free">${t.free}</div>`}</div>
       </div>`;
     })
     .join('');
+}
+
+const dayDate = (key) => longDate(new Date(`${key}T12:00Z`), 'UTC');
+
+function eventWhen(e) {
+  if (e.allDay) return e.startDay === e.endDay ? dayDate(e.startDay) : `${dayDate(e.startDay)} – ${dayDate(e.endDay)}`;
+  if (e.startDay === e.endDay) return `${longDate(e.start)} · ${hm(e.start)}–${hm(e.end)}`;
+  return `${longDate(e.start)} ${hm(e.start)} – ${longDate(e.end)} ${hm(e.end)}`;
+}
+
+let detailsTimer;
+function restartDetailsTimer() {
+  clearTimeout(detailsTimer);
+  detailsTimer = setTimeout(() => $('event-details').close(), DETAILS_MS);
+}
+
+function showDetails(e) {
+  const description = plainText(e.description);
+  const dialog = $('event-details');
+  dialog.innerHTML = `<div class="event-body" style="--c: ${e.color ?? colorOf[e.account]}">
+    <div class="event-head">
+      <div class="event-title">${escapeHtml(e.title)}</div>
+      <button class="event-close">${t.close}</button>
+    </div>
+    <div class="event-when">${eventWhen(e)}</div>
+    <div class="event-account" style="--c: ${colorOf[e.account]}">${accounts.find((a) => a.id === e.account).label}</div>
+    ${e.location ? `<div class="event-location">${escapeHtml(e.location)}</div>` : ''}
+    ${description ? `<div class="event-description">${escapeHtml(description)}</div>` : ''}
+  </div>`;
+  dialog.showModal();
+  restartDetailsTimer();
 }
 
 function calendarStatus(failed) {
@@ -263,6 +297,16 @@ if (accounts.length) {
     store(PREFS_KEY, prefs);
     renderCalendar();
   });
+  $('cal-days').addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-event]');
+    if (chip) showDetails(shown[chip.dataset.event]);
+  });
+  $('event-details').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget || e.target.closest('.event-close')) e.currentTarget.close();
+  });
+  // Scrolling a long description counts as reading, so it restarts the auto-close.
+  $('event-details').addEventListener('scroll', restartDetailsTimer, true);
+  $('event-details').addEventListener('close', () => clearTimeout(detailsTimer));
   showView();
   renderCalendar();
   refreshCalendar();
