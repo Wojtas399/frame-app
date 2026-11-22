@@ -58,7 +58,7 @@ Tap anywhere to refresh the weather now.
 
 ## Calendar
 
-The frame can show the next 7 days from two Google accounts, Private and Business. Each account
+The frame can show this month, the next 7 days, or today from two Google accounts, Private and Business. Each account
 serves its events as JSON from its own Google Apps Script web app. Without a `cal-` param, the
 frame shows only the weather dashboard.
 
@@ -87,7 +87,9 @@ The script reads the account's default calendar. To add other calendars, put the
 **Settings and sharing** > **Integrate calendar**. After you change the script, click **Deploy** >
 **Manage deployments**, edit the deployment, and select **New version**. The `/exec` URL stays the same.
 A deployment made before the script sent each event's location and description needs a **New version** the
-same way, or the frame shows events without them.
+same way, or the frame shows events without them. A deployment made before the script took a start date
+sends 14 days from today, so the month view shows no past events and stops after two weeks until you deploy a
+new version.
 
 Each event shows in its calendar's colour from Google Calendar, so you can tell the calendars apart.
 To change a colour, change it in Google Calendar. The frame picks it up at the next fetch. A script
@@ -95,8 +97,9 @@ deployed before this change sends no colours, and the frame shows its events in 
 until you deploy a new version.
 
 Tap **Calendar** in the top-left corner to switch to the calendar, and **Weather** to switch back.
-With both accounts set, a selector at the top shows **Private**, **Business**, or **All**. The frame
-remembers the view and the selection. It fetches the calendars every 10 minutes and keeps showing the
+Tap **Month**, **Week**, or **Day** at the top to see this month's grid, the 7 days from today, or today's
+hours. With both accounts set, a selector next to it shows **Private**, **Business**, or **All**. The frame
+remembers the view, the span, and the selection. It fetches the calendars every 10 minutes and keeps showing the
 last data when it is offline.
 
 Tap an event to see its time, account, location, and description. Tap outside it or **Close** to go back. It

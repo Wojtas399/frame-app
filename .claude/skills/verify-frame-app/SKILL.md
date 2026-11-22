@@ -5,7 +5,7 @@ description: Launch and drive the frame-app clock, weather and calendar dashboar
 
 # Verify frame-app
 
-frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a 7-day calendar view, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the calendar's view pill and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
+frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a calendar view with a month, week (7 days) or day span, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the calendar's view pill, span switcher and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
 
 All helpers live in `.claude/skills/verify-frame-app/scripts/`. Run them from the repo root:
 
@@ -67,11 +67,15 @@ Stable handles (ids from `index.html` and classes `src/main.js` renders):
 - `#status`: `Updated HH:MM`, `Offline · showing HH:MM data` or `Waiting for weather…`. It has class `error` when not updated
 - localStorage key `weather-v1`: the cached Open-Meteo response
 - `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without a `cal-` param
+- `#cal-spans .cal-span[data-span=month|week|day]`: the span switcher. The chosen one has class `on`, and `#cal-days` has `data-span` set to it
 - `#cal-accounts .cal-option[data-account=private|business|all]`: the selector (only with both params). The selected one has class `on`
 - `#cal-date`, `#cal-time`: the calendar header
-- `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its calendar colour, or its account colour when the feed has none
+- Week span, `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its calendar colour, or its account colour when the feed has none
+- Month span: 7 `.cal-weekday` headers, then `.cal-cell` per day (`.dim` for past days and days outside the month, `.today` for today) holding `.cal-cell-num` and `.cal-cell-events` with `.cal-chip`, `.cal-event` and a last `.cal-more` (`+N more`)
+- Day span: `.cal-allday` with today's `.cal-chip`s, then `.cal-timeline` holding one `.cal-hour` per hour (`HH:00`), `.cal-blocks` with a `.cal-block` per timed event (`style` sets `top`, `height`, `left`, `width`), and `.cal-free` on an empty day
+- Every event element in every span has `data-event`, and a tap on it opens `#event-details`
 - `#cal-status`: `Updated HH:MM`, `Offline · showing HH:MM data`, `<Account> calendar failed[ · showing HH:MM data]` or `Waiting for calendar…`. It has class `error` when not updated
-- localStorage keys `calendar-v1` (the last good feed per account) and `calendar-view-v1` (`{ view, selected }`)
+- localStorage keys `calendar-v1` (the last good feed per account) and `calendar-view-v1` (`{ view, selected, span }`)
 
 Example (tap to refresh, then the frame loses Wi-Fi):
 
