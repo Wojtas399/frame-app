@@ -1,6 +1,6 @@
 import './style.css';
-import { config, accounts, t } from './config.js';
-import { fetchWeather, describe } from './weather.js';
+import { config, accounts, t, saveLocation } from './config.js';
+import { fetchWeather, describe, searchPlaces } from './weather.js';
 import { icon } from './icons.js';
 import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, plainText, selectEvents, selectionOptions } from './calendar.js';
 
@@ -12,6 +12,7 @@ const CALENDAR_EVERY_MS = 10 * 60 * 1000;
 const FEEDS_KEY = 'calendar-v1';
 const PREFS_KEY = 'calendar-view-v1';
 const DETAILS_MS = 60 * 1000;
+const SEARCH_DELAY_MS = 300;
 
 const $ = (id) => document.getElementById(id);
 let weather = loadCached();
@@ -44,7 +45,6 @@ function renderWeather() {
   const { current: c, hourly: h, daily: d } = weather;
   const now = describe(c.weather_code);
 
-  $('place').textContent = config.place;
   $('now').innerHTML = `
     <div class="now-main">
       ${icon(now.icon, c.is_day === 1)}
@@ -237,6 +237,37 @@ function showDetails(e) {
   restartDetailsTimer();
 }
 
+let places = [];
+let searchTimer;
+let searchId = 0;
+let pickerTimer;
+function searchSoon() {
+  clearTimeout(searchTimer);
+  clearTimeout(pickerTimer);
+  pickerTimer = setTimeout(() => $('location-picker').close(), DETAILS_MS);
+  const query = $('location-search').value.trim();
+  const id = ++searchId;
+  if (query.length < 2) return showPlaces([]);
+  searchTimer = setTimeout(async () => {
+    try {
+      const found = await searchPlaces(query);
+      if (id === searchId) showPlaces(found, t.noPlaces);
+    } catch (err) {
+      console.error(err);
+      if (id === searchId) showPlaces([], t.searchFailed);
+    }
+  }, SEARCH_DELAY_MS);
+}
+
+function showPlaces(found, note = '') {
+  places = found;
+  $('location-results').innerHTML = found.length
+    ? found
+        .map((p, i) => `<button class="location-result" data-place="${i}">${escapeHtml(p.name)}<span class="location-detail">${escapeHtml(p.detail)}</span></button>`)
+        .join('')
+    : note && `<div class="location-note">${note}</div>`;
+}
+
 function calendarStatus(failed) {
   if (!failed.length) return t.updated(hm());
   const cached = failed.filter((a) => feeds[a.id]);
@@ -271,6 +302,27 @@ async function checkVersion() {
     }
   } catch {}
 }
+
+$('place').append(config.place);
+$('location-title').textContent = t.location;
+$('location-close').textContent = t.close;
+$('location-search').placeholder = t.searchPlace;
+$('place').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('location-search').value = '';
+  searchSoon();
+  $('location-picker').showModal();
+  $('location-search').focus();
+});
+$('location-search').addEventListener('input', searchSoon);
+$('location-picker').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const row = e.target.closest('[data-place]');
+  if (row) {
+    saveLocation(places[row.dataset.place]);
+    location.reload();
+  } else if (e.target === e.currentTarget || e.target.closest('#location-close')) e.currentTarget.close();
+});
 
 renderClock();
 renderWeather();
