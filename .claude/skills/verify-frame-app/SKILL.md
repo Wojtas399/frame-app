@@ -69,7 +69,7 @@ Stable handles (ids from `index.html` and classes `src/main.js` renders):
 - `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without a `cal-` param
 - `#cal-accounts .cal-option[data-account=private|business|all]`: the selector (only with both params). The selected one has class `on`
 - `#cal-date`, `#cal-time`: the calendar header
-- `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its account colour
+- `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its calendar colour, or its account colour when the feed has none
 - `#cal-status`: `Updated HH:MM`, `Offline · showing HH:MM data`, `<Account> calendar failed[ · showing HH:MM data]` or `Waiting for calendar…`. It has class `error` when not updated
 - localStorage keys `calendar-v1` (the last good feed per account) and `calendar-view-v1` (`{ view, selected }`)
 

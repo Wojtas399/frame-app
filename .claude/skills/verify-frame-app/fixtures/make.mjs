@@ -19,17 +19,19 @@ function zonedInstant(n, hhmm) {
   const w = wallClock(guess);
   return new Date(2 * guess - Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute)).toISOString();
 }
-const timed = (title, n, from, to, toDay = n) => ({ title, start: zonedInstant(n, from), end: zonedInstant(toDay, to), allDay: false });
-const allDay = (title, n, days = 1) => ({ title, start: day(n), end: day(n + days), allDay: true });
+const timed = (title, n, from, to, toDay = n, color) => ({ title, start: zonedInstant(n, from), end: zonedInstant(toDay, to), allDay: false, color });
+const allDay = (title, n, days = 1, color) => ({ title, start: day(n), end: day(n + days), allDay: true, color });
+const FAMILY = '#33b679';
+const HOLIDAYS = '#8e24aa';
 const hour = (h) => `${String(h).padStart(2, '0')}:00`;
 
 const feeds = {
   'private.json': {
     events: [
       timed('<b>x</b> & dinner', 0, '19:00', '21:00'),
-      timed('Gym', 0, '07:30', '08:15'),
-      allDay("Mum's birthday", 1),
-      allDay('Ski trip', 2, 3),
+      timed('Gym', 0, '07:30', '08:15', 0, FAMILY),
+      allDay("Mum's birthday", 1, 1, FAMILY),
+      allDay('Ski trip', 2, 3, HOLIDAYS),
       timed('Night train', 3, '23:00', '01:30', 4),
       timed('Dentist', 6, '10:00', '10:45'),
     ],
@@ -45,6 +47,7 @@ const feeds = {
     ],
   },
   'malformed.json': { events: [{ title: 5, start: 'soon' }] },
+  'bad-color.json': { events: [{ ...allDay('Painted', 0), color: 'red;background:url(x)' }] },
 };
 
 for (const [file, feed] of Object.entries(feeds)) writeFileSync(join(HERE, file), JSON.stringify(feed, null, 2) + '\n');

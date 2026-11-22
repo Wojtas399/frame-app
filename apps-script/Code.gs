@@ -1,8 +1,9 @@
 // Extra calendars to include besides the default one, by ID (Calendar settings > Integrate calendar).
 const CALENDAR_IDS = [];
 
-// GET ?days=N (default 7) -> { events: [{ title, start, end, allDay }] } from the start of today.
+// GET ?days=N (default 7) -> { events: [{ title, start, end, allDay, color }] } from the start of today.
 // Timed events have ISO instants. All-day events have yyyy-MM-dd dates and an exclusive end.
+// color is the source calendar's colour as #rrggbb.
 function doGet(e) {
   const days = Math.min(Math.max(Number(e.parameter.days) || 7, 1), 14);
   const start = new Date();
@@ -14,12 +15,15 @@ function doGet(e) {
   const day = (d) => Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
   const calendars = [CalendarApp.getDefaultCalendar(), ...CALENDAR_IDS.map((id) => CalendarApp.getCalendarById(id))].filter(Boolean);
   const events = calendars
-    .flatMap((calendar) => calendar.getEvents(start, end))
-    .filter((event) => event.getMyStatus() !== CalendarApp.GuestStatus.NO)
-    .map((event) =>
+    .flatMap((calendar) => {
+      const color = calendar.getColor();
+      return calendar.getEvents(start, end).map((event) => ({ event, color }));
+    })
+    .filter(({ event }) => event.getMyStatus() !== CalendarApp.GuestStatus.NO)
+    .map(({ event, color }) =>
       event.isAllDayEvent()
-        ? { title: event.getTitle(), start: day(event.getAllDayStartDate()), end: day(event.getAllDayEndDate()), allDay: true }
-        : { title: event.getTitle(), start: event.getStartTime().toISOString(), end: event.getEndTime().toISOString(), allDay: false },
+        ? { title: event.getTitle(), start: day(event.getAllDayStartDate()), end: day(event.getAllDayEndDate()), allDay: true, color }
+        : { title: event.getTitle(), start: event.getStartTime().toISOString(), end: event.getEndTime().toISOString(), allDay: false, color },
     );
 
   return ContentService.createTextOutput(JSON.stringify({ events })).setMimeType(ContentService.MimeType.JSON);
