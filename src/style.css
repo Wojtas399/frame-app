@@ -227,8 +227,10 @@ body[data-view] .view-toggle {
 }
 
 .view-toggle,
-.cal-option {
+.cal-option,
+.event-close {
   border: 0;
+  outline: none;
   font: inherit;
   cursor: none;
   -webkit-tap-highlight-color: transparent;
@@ -385,4 +387,85 @@ body[data-view] .view-toggle {
   text-align: center;
   font-size: 1.4vw;
   color: var(--muted);
+}
+
+.event-details {
+  width: 60vw;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 1.4vw;
+  overflow: hidden;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.event-details::backdrop {
+  background: rgba(11, 15, 23, 0.75);
+}
+
+.event-body {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 3vh 2.2vw 3.5vh;
+  border-left: 0.6vw solid var(--c);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4vh;
+  font-size: 1.6vw;
+  line-height: 1.35;
+}
+
+.event-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 2vw;
+}
+
+.event-title {
+  flex: 1;
+  font-size: 2.6vw;
+  overflow-wrap: anywhere;
+}
+
+.event-close {
+  flex-shrink: 0;
+  height: 5.5vh;
+  padding: 0 1.6vw;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.4vw;
+}
+
+.event-when {
+  color: var(--accent);
+}
+
+.event-account {
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+  color: var(--muted);
+}
+
+.event-account::before {
+  content: '';
+  width: 0.8vw;
+  height: 0.8vw;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.event-location {
+  overflow-wrap: anywhere;
+}
+
+.event-description {
+  margin-top: 1vh;
+  padding-top: 2vh;
+  border-top: 1px solid rgba(138, 148, 168, 0.25);
+  font-size: 1.4vw;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }

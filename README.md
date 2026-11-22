@@ -86,8 +86,13 @@ The script reads the account's default calendar. To add other calendars, put the
 `CALENDAR_IDS` at the top of the script. Google Calendar shows a calendar's ID under
 **Settings and sharing** > **Integrate calendar**. After you change the script, click **Deploy** >
 **Manage deployments**, edit the deployment, and select **New version**. The `/exec` URL stays the same.
+A deployment made before the script sent each event's location and description needs a **New version** the
+same way, or the frame shows events without them.
 
 Tap **Calendar** in the top-left corner to switch to the calendar, and **Weather** to switch back.
 With both accounts set, a selector at the top shows **Private**, **Business**, or **All**. The frame
 remembers the view and the selection. It fetches the calendars every 10 minutes and keeps showing the
 last data when it is offline.
+
+Tap an event to see its time, account, location, and description. Tap outside it or **Close** to go back. It
+also closes by itself after a minute.

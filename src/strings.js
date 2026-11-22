@@ -23,6 +23,7 @@ export const STRINGS = {
     private: 'Private',
     business: 'Business',
     all: 'All',
+    close: 'Close',
     unknown: 'Unknown',
     conditions: {
       0: 'Clear',
@@ -78,6 +79,7 @@ export const STRINGS = {
     private: 'Prywatny',
     business: 'Służbowy',
     all: 'Wszystkie',
+    close: 'Zamknij',
     unknown: 'Nieznana',
     conditions: {
       0: 'Bezchmurnie',
