@@ -33,7 +33,11 @@ const feeds = {
       allDay("Mum's birthday", 1, 1, FAMILY),
       allDay('Ski trip', 2, 3, HOLIDAYS),
       timed('Night train', 3, '23:00', '01:30', 4),
-      timed('Dentist', 6, '10:00', '10:45'),
+      {
+        ...timed('Dentist', 6, '10:00', '10:45'),
+        location: 'ul. Floriańska 12, Kraków',
+        description: `Bring the <b>X-ray</b> results.<br>Parking at the back gate.<ul><li>ID card</li><li>Insurance card</li></ul><img src=x onerror="window.__pwned = 1"><script>window.__pwned = 1</script>${'<p>More notes.</p>'.repeat(30)}`,
+      },
     ],
   },
   'business.json': {

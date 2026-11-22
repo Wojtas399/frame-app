@@ -215,6 +215,11 @@ function eventWhen(e) {
 }
 
 let detailsTimer;
+function restartDetailsTimer() {
+  clearTimeout(detailsTimer);
+  detailsTimer = setTimeout(() => $('event-details').close(), DETAILS_MS);
+}
+
 function showDetails(e) {
   const description = plainText(e.description);
   const dialog = $('event-details');
@@ -229,8 +234,7 @@ function showDetails(e) {
     ${description ? `<div class="event-description">${escapeHtml(description)}</div>` : ''}
   </div>`;
   dialog.showModal();
-  clearTimeout(detailsTimer);
-  detailsTimer = setTimeout(() => dialog.close(), DETAILS_MS);
+  restartDetailsTimer();
 }
 
 function calendarStatus(failed) {
@@ -300,6 +304,8 @@ if (accounts.length) {
   $('event-details').addEventListener('click', (e) => {
     if (e.target === e.currentTarget || e.target.closest('.event-close')) e.currentTarget.close();
   });
+  // Scrolling a long description counts as reading, so it restarts the auto-close.
+  $('event-details').addEventListener('scroll', restartDetailsTimer, true);
   $('event-details').addEventListener('close', () => clearTimeout(detailsTimer));
   showView();
   renderCalendar();
