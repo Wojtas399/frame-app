@@ -39,6 +39,7 @@ const feeds = {
         description: `Bring the <b>X-ray</b> results.<br>Parking at the back gate.<ul><li>ID card</li><li>Insurance card</li></ul><img src=x onerror="window.__pwned = 1"><script>window.__pwned = 1</script>${'<p>More notes.</p>'.repeat(30)}`,
       },
       timed('Haircut', -5, '17:00', '17:45'),
+      allDay('Book fair', -1, 3),
     ],
   },
   'business.json': {

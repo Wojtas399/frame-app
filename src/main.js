@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, dayLayout, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -146,6 +146,7 @@ const colorOf = Object.fromEntries(accounts.map((a) => [a.id, a.color]));
 const SPANS = {
   month: { label: t.month, render: monthHtml },
   week: { label: t.week, render: weekHtml },
+  day: { label: t.day, render: dayHtml },
 };
 const feeds = loadFeeds();
 const prefs = loadPrefs();
@@ -179,12 +180,24 @@ const isLight = (hex) => {
   return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 153;
 };
 
-function eventHtml(e, key) {
+function eventAttrs(e, style = '') {
   const c = e.color ?? colorOf[e.account];
-  const attrs = `data-event="${shown.indexOf(e)}" style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'})"`;
-  if (e.allDay) return `<div class="cal-chip" ${attrs}>${escapeHtml(e.title)}</div>`;
+  return `data-event="${shown.indexOf(e)}" style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'}); ${style}"`;
+}
+
+function eventHtml(e, key) {
+  if (e.allDay) return `<div class="cal-chip" ${eventAttrs(e)}>${escapeHtml(e.title)}</div>`;
   const when = key === e.startDay ? hm(e.start) : key === e.endDay ? t.until(hm(e.end)) : t.allDay;
-  return `<div class="cal-event" ${attrs}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
+  return `<div class="cal-event" ${eventAttrs(e)}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
+}
+
+const pct = (f) => `${+(f * 100).toFixed(3)}%`;
+
+function blockHtml({ event: e, top, height, col, cols }) {
+  return `<div class="cal-block" ${eventAttrs(e, `top: ${pct(top)}; height: ${pct(height)}; left: ${pct(col / cols)}; width: calc(${pct(1 / cols)} - 0.3vw)`)}>
+    <div><span class="cal-event-time">${hm(e.start)}–${hm(e.end)}</span> ${escapeHtml(e.title)}</div>
+    ${e.location ? `<div class="cal-block-place">${escapeHtml(e.location)}</div>` : ''}
+  </div>`;
 }
 
 const zonedToday = () => `${timeZone()} ${dayKey(new Date(), timeZone())}`;
@@ -232,6 +245,19 @@ function monthHtml(today) {
         <div class="cal-cell-events">${eventsOnDay(shown, key).map((e) => eventHtml(e, key)).join('')}</div>
       </div>`),
   ].join('');
+}
+
+function dayHtml(today) {
+  const list = eventsOnDay(shown, today);
+  const { from, to, blocks } = dayLayout(list, today, timeZone());
+  const hours = Array.from({ length: to - from }, (_, i) => `<div class="cal-hour">${String(from + i).padStart(2, '0')}:00</div>`);
+  const chips = list.filter((e) => e.allDay).map((e) => eventHtml(e, today));
+  return `<div class="cal-allday">${chips.join('')}</div>
+    <div class="cal-timeline">
+      ${hours.join('')}
+      <div class="cal-blocks">${blocks.map(blockHtml).join('')}</div>
+      ${list.length ? '' : `<div class="cal-free">${t.free}</div>`}
+    </div>`;
 }
 
 // A month cell lists the events that fit, then how many more there are. Needs layout, so the calendar must be shown.

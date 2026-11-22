@@ -87,6 +87,40 @@ export function eventsOnDay(events, key) {
   return events.filter((e) => e.startDay <= key && key <= e.endDay).sort((a, b) => b.allDay - a.allDay || a.start - b.start);
 }
 
+const minuteOf = (date, timeZone) => {
+  const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date).split(':').map(Number);
+  return h * 60 + m;
+};
+
+// Timed events on one day as blocks on an hour timeline from `from` to `to`, with top and height as fractions of it.
+// Each run of overlapping events splits the width into as many columns as it needs, each event in the first free one.
+export function dayLayout(events, key, timeZone) {
+  const spans = eventsOnDay(events, key)
+    .filter((e) => !e.allDay)
+    .map((event) => ({
+      event,
+      start: event.startDay < key ? 0 : minuteOf(event.start, timeZone),
+      end: dayKey(event.end, timeZone) > key ? 24 * 60 : minuteOf(event.end, timeZone),
+    }))
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+  const from = Math.max(0, Math.min(8, ...spans.map((s) => Math.floor(s.start / 60))));
+  const to = Math.min(24, Math.max(20, ...spans.map((s) => Math.ceil(s.end / 60))));
+  const placed = [];
+  let columns = [];
+  let runEnd = 0;
+  for (const s of spans) {
+    if (s.start >= runEnd) columns = [];
+    let col = columns.findIndex((end) => end <= s.start);
+    if (col < 0) col = columns.length;
+    columns[col] = s.end;
+    runEnd = Math.max(runEnd, s.end);
+    placed.push({ ...s, col, columns });
+  }
+  const minutes = (to - from) * 60;
+  const blocks = placed.map(({ event, start, end, col, columns }) => ({ event, top: (start - from * 60) / minutes, height: (end - start) / minutes, col, cols: columns.length }));
+  return { from, to, blocks };
+}
+
 export const ALL = 'all';
 
 export const selectionOptions = (accounts) => (accounts.length > 1 ? [...accounts, { id: ALL, label: t.all }] : []);
