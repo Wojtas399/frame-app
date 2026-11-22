@@ -4,7 +4,7 @@ const CALENDAR_IDS = [];
 // GET ?days=N (default 7) -> { events: [{ title, start, end, allDay }] } from the start of today.
 // Timed events have ISO instants. All-day events have yyyy-MM-dd dates and an exclusive end.
 function doGet(e) {
-  const days = Math.min(Number(e.parameter.days) || 7, 14);
+  const days = Math.min(Math.max(Number(e.parameter.days) || 7, 1), 14);
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
@@ -12,9 +12,10 @@ function doGet(e) {
 
   const timeZone = Session.getScriptTimeZone();
   const day = (d) => Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
-  const calendars = [CalendarApp.getDefaultCalendar(), ...CALENDAR_IDS.map((id) => CalendarApp.getCalendarById(id))];
+  const calendars = [CalendarApp.getDefaultCalendar(), ...CALENDAR_IDS.map((id) => CalendarApp.getCalendarById(id))].filter(Boolean);
   const events = calendars
     .flatMap((calendar) => calendar.getEvents(start, end))
+    .filter((event) => event.getMyStatus() !== CalendarApp.GuestStatus.NO)
     .map((event) =>
       event.isAllDayEvent()
         ? { title: event.getTitle(), start: day(event.getAllDayStartDate()), end: day(event.getAllDayEndDate()), allDay: true }

@@ -62,10 +62,12 @@ const send = (method, params = {}) =>
 const once = (method) => new Promise((ok) => listeners.push((m) => m.method === method && ok(m.params)));
 const stamp = () => new Date().toISOString();
 
+const secret = (url) => /script\.google|googleusercontent/.test(url);
+const logged = (url) => (secret(url) ? `${new URL(url).origin}/… (feed URL hidden)` : url);
 const watched = (url) => /api\.open-meteo\.com|version\.json|script\.google|googleusercontent|\/fixtures\//.test(url);
 listeners.push(({ method, params }) => {
   if (method === 'Network.requestWillBeSent' && watched(params.request.url))
-    appendFileSync(out('network.log'), `${stamp()} REQ  ${params.requestId} ${params.request.url}\n`);
+    appendFileSync(out('network.log'), `${stamp()} REQ  ${params.requestId} ${logged(params.request.url)}\n`);
   if (method === 'Network.responseReceived' && watched(params.response.url))
     appendFileSync(out('network.log'), `${stamp()} RESP ${params.requestId} ${params.response.status}\n`);
   if (method === 'Network.loadingFailed')

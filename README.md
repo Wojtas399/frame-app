@@ -30,11 +30,11 @@ To show the calendar, put the feed URLs (see [Calendar](#calendar)) in a `.env` 
 root. It is gitignored, so the URLs stay on this Mac:
 
 ```sh
-CAL_PRIVATE=https://script.google.com/macros/s/…/exec
-CAL_BUSINESS=https://script.google.com/macros/s/…/exec
+CAL_PRIVATE='https://script.google.com/macros/s/…/exec'
+CAL_BUSINESS='https://script.google.com/macros/s/…/exec'
 ```
 
-Leave out a line for an account you don't use. `npm run frame` adds them to the frame's URL as
+Keep the single quotes, and leave out a line for an account you don't use. `npm run frame` adds them to the frame's URL as
 `cal-private` and `cal-business`.
 
 ## Settings

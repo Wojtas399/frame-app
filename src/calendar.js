@@ -1,16 +1,21 @@
 export async function fetchFeed(url) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+  const request = new URL(url, location.href);
+  request.searchParams.set('days', '8');
+  const res = await fetch(request, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`Calendar request failed: ${res.status}`);
   const { events } = await res.json();
-  if (!Array.isArray(events) || !events.every(isFeedEvent)) throw new Error('Calendar feed is malformed');
+  if (!isFeed(events)) throw new Error('Calendar feed is malformed');
   return events;
 }
 
+export const isFeed = (events) => Array.isArray(events) && events.every(isFeedEvent);
+
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isInstant = (s) => typeof s === 'string' && !Number.isNaN(Date.parse(s));
+const isDate = (s) => DATE.test(s) && isInstant(s);
 const isFeedEvent = (e) =>
   typeof e?.title === 'string' &&
-  (e.allDay === true ? DATE.test(e.start) && DATE.test(e.end) : e.allDay === false && isInstant(e.start) && isInstant(e.end));
+  (e.allDay === true ? isDate(e.start) && isDate(e.end) : e.allDay === false && isInstant(e.start) && isInstant(e.end));
 
 export function dayKey(date, timeZone) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);

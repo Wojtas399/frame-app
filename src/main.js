@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -146,7 +146,7 @@ const prefs = loadPrefs();
 
 function loadFeeds() {
   const saved = load(FEEDS_KEY);
-  return Object.fromEntries(accounts.filter((a) => saved?.[a.id]?.url === a.url).map((a) => [a.id, saved[a.id]]));
+  return Object.fromEntries(accounts.filter((a) => saved?.[a.id]?.url === a.url && isFeed(saved[a.id].events)).map((a) => [a.id, saved[a.id]]));
 }
 
 function loadPrefs() {
