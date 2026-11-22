@@ -37,6 +37,8 @@ CAL_BUSINESS='https://script.google.com/macros/s/…/exec'
 Keep the single quotes, and leave out a line for an account you don't use. `npm run frame` adds them to the frame's URL as
 `cal-private` and `cal-business`.
 
+`npm run frame` shows the frame in Polish (`locale=pl-PL`). For English, add `LOCALE='en-GB'` to `.env`.
+
 ## Settings
 
 URL query parameters override the defaults in `src/config.js`:
@@ -48,6 +50,9 @@ URL query parameters override the defaults in `src/config.js`:
 | `locale` | `en-GB` | `&locale=pl-PL` |
 | `cal-private` | none | `&cal-private=<URL-encoded /exec URL>` |
 | `cal-business` | none | `&cal-business=<URL-encoded /exec URL>` |
+
+`locale` sets the language of the dates and the labels. `pl` gives Polish text and any other language gives English.
+The labels live in `src/strings.js`.
 
 Tap anywhere to refresh the weather now.
 
