@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, dayLayout, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, dayLayout, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, minuteOf, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -220,6 +220,8 @@ function renderCalendar() {
   days.dataset.span = prefs.span;
   days.innerHTML = SPANS[prefs.span].render(dayKey(new Date(), timeZone()));
   fitCells(days);
+  scrollTimeline(days);
+  if ($('day-preview').open) fillDayPreview($('day-preview').dataset.day);
 }
 
 function weekHtml(today) {
@@ -240,24 +242,36 @@ function monthHtml(today) {
   const state = (key) => (key === today ? ' today' : key < today || !key.startsWith(month) ? ' dim' : '');
   return [
     ...days.slice(0, 7).map((key) => `<div class="cal-weekday">${weekday(key)}</div>`),
-    ...days.map((key) => `<div class="cal-cell${state(key)}">
+    ...days.map((key) => `<div class="cal-cell${state(key)}" data-day="${key}">
         <div class="cal-cell-num">${Number(key.slice(8))}</div>
         <div class="cal-cell-events">${eventsOnDay(shown, key).map((e) => eventHtml(e, key)).join('')}</div>
       </div>`),
   ].join('');
 }
 
-function dayHtml(today) {
-  const list = eventsOnDay(shown, today);
-  const { from, to, blocks } = dayLayout(list, today, timeZone());
-  const hours = Array.from({ length: to - from }, (_, i) => `<div class="cal-hour">${String(from + i).padStart(2, '0')}:00</div>`);
-  const chips = list.filter((e) => e.allDay).map((e) => eventHtml(e, today));
+const HOURS = Array.from({ length: 24 }, (_, h) => `<div class="cal-hour">${String(h).padStart(2, '0')}:00</div>`).join('');
+
+function dayHtml(key) {
+  const list = eventsOnDay(shown, key);
+  const blocks = dayLayout(list, key, timeZone());
+  const now = key === dayKey(new Date(), timeZone()) ? minuteOf(new Date(), timeZone()) / (24 * 60) : 0;
+  // Open on the next event that hasn't ended, else the first one, else 08:00, with half an hour above it.
+  const first = blocks.find((b) => b.top + b.height > now) ?? blocks[0];
+  const scroll = Math.max(0, (first?.top ?? 8 / 24) - 0.5 / 24);
+  const chips = list.filter((e) => e.allDay).map((e) => eventHtml(e, key));
   return `<div class="cal-allday">${chips.join('')}</div>
     <div class="cal-timeline">
-      ${hours.join('')}
-      <div class="cal-blocks">${blocks.map(blockHtml).join('')}</div>
+      <div class="cal-scroll" data-scroll="${scroll}">
+        <div class="cal-track">${HOURS}<div class="cal-blocks">${blocks.map(blockHtml).join('')}</div></div>
+      </div>
       ${list.length ? '' : `<div class="cal-free">${t.free}</div>`}
     </div>`;
+}
+
+// Scrolling needs layout, so the timeline must be shown.
+function scrollTimeline(root) {
+  const el = root.querySelector('.cal-scroll');
+  if (el) el.scrollTop = el.dataset.scroll * el.scrollHeight;
 }
 
 // A month cell lists the events that fit, then how many more there are. Needs layout, so the calendar must be shown.
@@ -283,10 +297,28 @@ function eventWhen(e) {
   return `${longDate(e.start)} ${hm(e.start)} – ${longDate(e.end)} ${hm(e.end)}`;
 }
 
-let detailsTimer;
-function restartDetailsTimer() {
-  clearTimeout(detailsTimer);
-  detailsTimer = setTimeout(() => $('event-details').close(), DETAILS_MS);
+// One idle timer for every open dialog, so a stacked dialog never closes under the one being read.
+let idleTimer;
+function restartIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()), DETAILS_MS);
+}
+
+function fillDayPreview(key) {
+  const dialog = $('day-preview');
+  dialog.dataset.day = key;
+  dialog.innerHTML = `<div class="event-head">
+      <div class="event-title">${dayDate(key)}</div>
+      <button class="event-close">${t.close}</button>
+    </div>
+    <div class="cal-days" data-span="day">${dayHtml(key)}</div>`;
+  scrollTimeline(dialog);
+}
+
+function showDayPreview(key) {
+  $('day-preview').showModal();
+  fillDayPreview(key);
+  restartIdleTimer();
 }
 
 function showDetails(e) {
@@ -303,7 +335,7 @@ function showDetails(e) {
     ${description ? `<div class="event-description">${escapeHtml(description)}</div>` : ''}
   </div>`;
   dialog.showModal();
-  restartDetailsTimer();
+  restartIdleTimer();
 }
 
 function calendarStatus(failed) {
@@ -371,16 +403,26 @@ if (accounts.length) {
     });
   choose('cal-accounts', 'account', 'selected');
   choose('cal-spans', 'span', 'span');
-  $('cal-days').addEventListener('click', (e) => {
+  // A month cell is too small to aim at one event, so a tap anywhere in it opens the day.
+  const openEvent = (e) => {
     const chip = e.target.closest('[data-event]');
     if (chip) showDetails(shown[chip.dataset.event]);
+  };
+  $('cal-days').addEventListener('click', (e) => {
+    const cell = e.target.closest('[data-day]');
+    if (cell) showDayPreview(cell.dataset.day);
+    else openEvent(e);
   });
-  $('event-details').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget || e.target.closest('.event-close')) e.currentTarget.close();
-  });
-  // Scrolling a long description counts as reading, so it restarts the auto-close.
-  $('event-details').addEventListener('scroll', restartDetailsTimer, true);
-  $('event-details').addEventListener('close', () => clearTimeout(detailsTimer));
+  for (const dialog of [$('day-preview'), $('event-details')]) {
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog || e.target.closest('.event-close')) dialog.close();
+      else if (dialog.id === 'day-preview') openEvent(e);
+      restartIdleTimer();
+    });
+    // Scrolling a long description counts as reading, so it restarts the auto-close.
+    dialog.addEventListener('scroll', restartIdleTimer, true);
+    dialog.addEventListener('close', () => document.querySelector('dialog[open]') || clearTimeout(idleTimer));
+  }
   showView();
   renderCalendar();
   refreshCalendar();

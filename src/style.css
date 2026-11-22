@@ -490,16 +490,26 @@ body[data-view] .view-toggle {
   flex: 1;
   min-height: 0;
   position: relative;
-  display: flex;
-  flex-direction: column;
   border-radius: 1.4vw;
   overflow: hidden;
   background: var(--panel);
 }
 
+.cal-scroll {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.cal-track {
+  position: relative;
+}
+
 .cal-hour {
-  flex: 1;
-  min-height: 0;
+  height: 7.5vh;
   padding: 0.3vh 1vw;
   border-top: 1px solid rgba(138, 148, 168, 0.2);
   font-size: 1.1vw;
@@ -537,6 +547,7 @@ body[data-view] .view-toggle {
 }
 
 .cal-timeline .cal-free {
+  pointer-events: none;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -627,4 +638,29 @@ body[data-view] .view-toggle {
   font-size: 1.4vw;
   white-space: pre-line;
   overflow-wrap: anywhere;
+}
+
+.day-preview {
+  width: 84vw;
+  height: 86vh;
+  margin: auto;
+  padding: 3vh 2.2vw;
+  border: 0;
+  border-radius: 1.4vw;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.day-preview[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+}
+
+.day-preview::backdrop {
+  background: rgba(11, 15, 23, 0.75);
+}
+
+.day-preview .event-close {
+  background: var(--panel);
 }
