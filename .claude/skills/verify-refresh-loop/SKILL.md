@@ -9,7 +9,7 @@ The frame runs unattended for days, so its most important promise is that it kee
 
 ## How it works
 
-`check.mjs` loads the real, unmodified `src/main.js` (with `config.js`, `weather.js` and `icons.js`) into a fresh Node `vm` context for each path. Only the browser APIs that main.js calls are replaced:
+`check.mjs` loads the real, unmodified `src/main.js` (with `config.js`, `strings.js`, `weather.js` and `icons.js`) into a fresh Node `vm` context for each path. Only the browser APIs that main.js calls are replaced:
 
 - `setTimeout` and `clearTimeout`: a timer fires only when the checker fires it.
 - `fetch`: an Open-Meteo request settles only when the checker settles it. `version.json` always returns the same sha.

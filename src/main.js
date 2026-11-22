@@ -1,5 +1,5 @@
 import './style.css';
-import { config, accounts } from './config.js';
+import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
 import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, selectEvents, selectionOptions } from './calendar.js';
@@ -49,12 +49,12 @@ function renderWeather() {
       <div class="now-temp">${deg(c.temperature_2m)}</div>
     </div>
     <div class="now-label">${now.label}</div>
-    <div class="now-range">H ${deg(d.temperature_2m_max[0])} · L ${deg(d.temperature_2m_min[0])}</div>
+    <div class="now-range">${t.high} ${deg(d.temperature_2m_max[0])} · ${t.low} ${deg(d.temperature_2m_min[0])}</div>
     <dl class="now-details">
-      <div><dt>Feels like</dt><dd>${deg(c.apparent_temperature)}</dd></div>
-      <div><dt>Wind</dt><dd>${Math.round(c.wind_speed_10m)} km/h</dd></div>
-      <div><dt>Humidity</dt><dd>${c.relative_humidity_2m}%</dd></div>
-      <div><dt>Sun</dt><dd>${hhmm(d.sunrise[0])}–${hhmm(d.sunset[0])}</dd></div>
+      <div><dt>${t.feelsLike}</dt><dd>${deg(c.apparent_temperature)}</dd></div>
+      <div><dt>${t.wind}</dt><dd>${Math.round(c.wind_speed_10m)} km/h</dd></div>
+      <div><dt>${t.humidity}</dt><dd>${c.relative_humidity_2m}%</dd></div>
+      <div><dt>${t.sun}</dt><dd>${hhmm(d.sunrise[0])}–${hhmm(d.sunset[0])}</dd></div>
     </dl>`;
 
   const start = Math.max(0, h.time.indexOf(`${c.time.slice(0, 13)}:00`)) + 1;
@@ -101,11 +101,11 @@ async function refreshWeather() {
     saveCached(weather);
     renderClock();
     renderWeather();
-    setStatus(`Updated ${fmt({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`);
+    setStatus(t.updated(hm()));
     weatherTimer = setTimeout(refreshWeather, WEATHER_EVERY_MS);
   } catch (err) {
     console.error(err);
-    setStatus(weather ? `Offline · showing ${hhmm(weather.current.time)} data` : 'Waiting for weather…', true);
+    setStatus(weather ? `${t.offline} · ${t.showing(hhmm(weather.current.time))}` : t.waitingWeather, true);
     weatherTimer = setTimeout(refreshWeather, RETRY_MS);
   }
 }
@@ -159,18 +159,18 @@ function loadPrefs() {
 
 function showView() {
   document.body.dataset.view = prefs.view;
-  $('view-toggle').textContent = prefs.view === 'calendar' ? 'Weather' : 'Calendar';
+  $('view-toggle').textContent = prefs.view === 'calendar' ? t.weather : t.calendar;
 }
 
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const dayName = (key, i) =>
-  ['Today', 'Tomorrow'][i] ??
+  [t.today, t.tomorrow][i] ??
   new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${key}T12:00Z`));
 
 function eventHtml(e, key) {
   const style = `style="--c: ${colorOf[e.account]}"`;
   if (e.allDay) return `<div class="cal-chip" ${style}>${escapeHtml(e.title)}</div>`;
-  const when = key === e.startDay ? hm(e.start) : key === e.endDay ? `to ${hm(e.end)}` : 'all day';
+  const when = key === e.startDay ? hm(e.start) : key === e.endDay ? t.until(hm(e.end)) : t.allDay;
   return `<div class="cal-event" ${style}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
 }
 
@@ -191,18 +191,18 @@ function renderCalendar() {
       const list = eventsOnDay(events, key);
       return `<div class="cal-day">
         <div class="cal-day-name">${dayName(key, i)}</div>
-        <div class="cal-events">${list.length ? list.map((e) => eventHtml(e, key)).join('') : '<div class="cal-free">Free</div>'}</div>
+        <div class="cal-events">${list.length ? list.map((e) => eventHtml(e, key)).join('') : `<div class="cal-free">${t.free}</div>`}</div>
       </div>`;
     })
     .join('');
 }
 
 function calendarStatus(failed) {
-  if (!failed.length) return `Updated ${hm()}`;
+  if (!failed.length) return t.updated(hm());
   const cached = failed.filter((a) => feeds[a.id]);
-  const showing = cached.length ? ` · showing ${hm(new Date(Math.min(...cached.map((a) => feeds[a.id].at))))} data` : '';
-  if (failed.length < accounts.length) return `${failed.map((a) => a.label).join(', ')} calendar failed${showing}`;
-  return cached.length ? `Offline${showing}` : 'Waiting for calendar…';
+  const showing = cached.length ? ` · ${t.showing(hm(new Date(Math.min(...cached.map((a) => feeds[a.id].at)))))}` : '';
+  if (failed.length < accounts.length) return `${t.calendarFailed(failed.map((a) => a.label).join(', '))}${showing}`;
+  return cached.length ? `${t.offline}${showing}` : t.waitingCalendar;
 }
 
 async function refreshCalendar() {

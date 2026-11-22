@@ -1,3 +1,5 @@
+import { t } from './config.js';
+
 export async function fetchFeed(url) {
   const request = new URL(url, location.href);
   request.searchParams.set('days', '8');
@@ -51,6 +53,6 @@ export function eventsOnDay(events, key) {
 
 export const ALL = 'all';
 
-export const selectionOptions = (accounts) => (accounts.length > 1 ? [...accounts, { id: ALL, label: 'All' }] : []);
+export const selectionOptions = (accounts) => (accounts.length > 1 ? [...accounts, { id: ALL, label: t.all }] : []);
 
 export const selectEvents = (events, selected) => (selected === ALL ? events : events.filter((e) => e.account === selected));
