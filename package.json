@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "frame": "scripts/debug-on-frame.sh"
+    "frame": "scripts/debug-on-frame.sh",
+    "worktree:link": "scripts/worktree-link.sh"
   },
   "devDependencies": {
     "vite": "^6.4.6"
