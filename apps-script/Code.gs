@@ -4,7 +4,7 @@ const CALENDAR_IDS = [];
 // GET ?days=N (default 7) -> { events: [{ title, start, end, allDay }] } from the start of today.
 // Timed events have ISO instants. All-day events have yyyy-MM-dd dates and an exclusive end.
 function doGet(e) {
-  const days = Number(e.parameter.days) || 7;
+  const days = Math.min(Number(e.parameter.days) || 7, 14);
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);

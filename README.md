@@ -50,6 +50,8 @@ Set up each account once:
 
 1. Sign in to Google as that account and open [script.google.com](https://script.google.com).
 2. Click **New project**, replace the code in the editor with [`apps-script/Code.gs`](apps-script/Code.gs), and save.
+   In **Project Settings**, tick **Show "appsscript.json" manifest file in editor**, then replace that file with
+   [`apps-script/appsscript.json`](apps-script/appsscript.json). It limits the script to reading your calendar.
 3. Click **Deploy** > **New deployment**, and select the type **Web app**.
 4. Set **Execute as** to **Me** and **Who has access** to **Anyone**, then click **Deploy**.
 5. Authorise the script to read your calendar.
