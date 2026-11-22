@@ -228,6 +228,7 @@ body[data-view] .view-toggle {
 
 .view-toggle,
 .cal-option,
+.cal-span,
 .event-close {
   border: 0;
   outline: none;
@@ -252,8 +253,10 @@ body[data-view] .view-toggle {
   height: 5.5vh;
   display: flex;
   justify-content: flex-end;
+  gap: 1vw;
 }
 
+.cal-spans,
 .cal-accounts {
   display: flex;
   gap: 0.3vw;
@@ -266,7 +269,8 @@ body[data-view] .view-toggle {
   display: none;
 }
 
-.cal-option {
+.cal-option,
+.cal-span {
   display: flex;
   align-items: center;
   gap: 0.6vw;
@@ -296,6 +300,11 @@ body[data-view] .view-toggle {
 
 .cal-option.on::before {
   background: var(--bg);
+}
+
+.cal-span.on {
+  background: var(--text);
+  color: var(--bg);
 }
 
 .cal-title {
@@ -386,6 +395,75 @@ body[data-view] .view-toggle {
   margin-top: 1vh;
   text-align: center;
   font-size: 1.4vw;
+  color: var(--muted);
+}
+
+.cal-days[data-span='month'] {
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.5vw;
+}
+
+.cal-weekday {
+  font-size: 1.2vw;
+  color: var(--muted);
+  text-align: center;
+}
+
+.cal-cell {
+  min-width: 0;
+  background: var(--panel);
+  border-radius: 0.8vw;
+  padding: 0.6vh 0.5vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vh;
+}
+
+.cal-cell.dim {
+  opacity: 0.45;
+}
+
+.cal-cell.today {
+  box-shadow: inset 0 0 0 0.2vw var(--accent);
+}
+
+.cal-cell-num {
+  font-size: 1.3vw;
+}
+
+.cal-cell.today .cal-cell-num {
+  color: var(--accent);
+}
+
+.cal-cell-events {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vh;
+}
+
+.cal-cell .cal-chip,
+.cal-cell .cal-event,
+.cal-more {
+  font-size: 1vw;
+}
+
+.cal-cell .cal-chip {
+  padding: 0.1vh 0.4vw;
+  border-radius: 0.4vw;
+}
+
+.cal-cell .cal-event {
+  padding-left: 0.4vw;
+  border-left-width: 0.25vw;
+  -webkit-line-clamp: 1;
+}
+
+.cal-more {
+  flex-shrink: 0;
   color: var(--muted);
 }
 

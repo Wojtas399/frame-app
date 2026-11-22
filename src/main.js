@@ -2,7 +2,7 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, plainText, selectEvents, selectionOptions } from './calendar.js';
+import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -143,6 +143,10 @@ function store(key, value) {
 
 const options = selectionOptions(accounts);
 const colorOf = Object.fromEntries(accounts.map((a) => [a.id, a.color]));
+const SPANS = {
+  month: { label: t.month, render: monthHtml },
+  week: { label: t.week, render: weekHtml },
+};
 const feeds = loadFeeds();
 const prefs = loadPrefs();
 
@@ -156,6 +160,7 @@ function loadPrefs() {
   return {
     view: saved?.view === 'calendar' ? 'calendar' : 'weather',
     selected: options.some((o) => o.id === saved?.selected) ? saved.selected : ALL,
+    span: Object.hasOwn(SPANS, saved?.span) ? saved.span : 'week',
   };
 }
 
@@ -192,10 +197,20 @@ function renderCalendar() {
     accounts.flatMap((a) => (feeds[a.id] ? calEvents(feeds[a.id].events, a.id, timeZone()) : [])),
     prefs.selected,
   );
+  $('cal-spans').innerHTML = Object.entries(SPANS)
+    .map(([id, s]) => `<button class="cal-span${id === prefs.span ? ' on' : ''}" data-span="${id}">${s.label}</button>`)
+    .join('');
   $('cal-accounts').innerHTML = options
     .map((o) => `<button class="cal-option${o.id === prefs.selected ? ' on' : ''}" data-account="${o.id}" style="--c: ${o.color ?? 'var(--text)'}">${o.label}</button>`)
     .join('');
-  $('cal-days').innerHTML = daysAhead(dayKey(new Date(), timeZone()), 7)
+  const days = $('cal-days');
+  days.dataset.span = prefs.span;
+  days.innerHTML = SPANS[prefs.span].render(dayKey(new Date(), timeZone()));
+  fitCells(days);
+}
+
+function weekHtml(today) {
+  return daysAhead(today, 7)
     .map((key, i) => {
       const list = eventsOnDay(shown, key);
       return `<div class="cal-day">
@@ -204,6 +219,34 @@ function renderCalendar() {
       </div>`;
     })
     .join('');
+}
+
+function monthHtml(today) {
+  const days = monthDays(today);
+  const month = today.slice(0, 7);
+  const state = (key) => (key === today ? ' today' : key < today || !key.startsWith(month) ? ' dim' : '');
+  return [
+    ...days.slice(0, 7).map((key) => `<div class="cal-weekday">${weekday(key)}</div>`),
+    ...days.map((key) => `<div class="cal-cell${state(key)}">
+        <div class="cal-cell-num">${Number(key.slice(8))}</div>
+        <div class="cal-cell-events">${eventsOnDay(shown, key).map((e) => eventHtml(e, key)).join('')}</div>
+      </div>`),
+  ].join('');
+}
+
+// A month cell lists the events that fit, then how many more there are. Needs layout, so the calendar must be shown.
+function fitCells(root) {
+  for (const list of root.querySelectorAll('.cal-cell-events')) {
+    const items = [...list.children];
+    const fits = (el) => el.getBoundingClientRect().bottom <= list.getBoundingClientRect().bottom;
+    if (!items.length || fits(items.at(-1))) continue;
+    list.insertAdjacentHTML('beforeend', '<div class="cal-more"></div>');
+    let hidden = 0;
+    do {
+      items.pop().remove();
+      list.lastElementChild.textContent = t.more(++hidden);
+    } while (items.length && !fits(list.lastElementChild));
+  }
 }
 
 const dayDate = (key) => longDate(new Date(`${key}T12:00Z`), 'UTC');
@@ -290,14 +333,18 @@ if (accounts.length) {
     prefs.view = prefs.view === 'calendar' ? 'weather' : 'calendar';
     store(PREFS_KEY, prefs);
     showView();
-  });
-  $('cal-accounts').addEventListener('click', (e) => {
-    const option = e.target.closest('[data-account]');
-    if (!option) return;
-    prefs.selected = option.dataset.account;
-    store(PREFS_KEY, prefs);
     renderCalendar();
   });
+  const choose = (id, attr, pref) =>
+    $(id).addEventListener('click', (e) => {
+      const option = e.target.closest(`[data-${attr}]`);
+      if (!option) return;
+      prefs[pref] = option.dataset[attr];
+      store(PREFS_KEY, prefs);
+      renderCalendar();
+    });
+  choose('cal-accounts', 'account', 'selected');
+  choose('cal-spans', 'span', 'span');
   $('cal-days').addEventListener('click', (e) => {
     const chip = e.target.closest('[data-event]');
     if (chip) showDetails(shown[chip.dataset.event]);
