@@ -229,6 +229,7 @@ body[data-view] .view-toggle {
 .view-toggle,
 .cal-option,
 .cal-span,
+.cal-nav button,
 .event-close {
   border: 0;
   outline: none;
@@ -321,6 +322,36 @@ body[data-view] .view-toggle {
   font-variant-numeric: tabular-nums;
 }
 
+.cal-nav {
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  gap: 0.3vw;
+  padding: 0.4vh 0.3vw;
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.cal-nav button {
+  height: 5vh;
+  min-width: 4.5vw;
+  padding: 0 1.4vw;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.4vw;
+}
+
+.cal-nav button[data-step='-1'],
+.cal-nav button[data-step='1'] {
+  font-size: 2.2vw;
+  line-height: 1;
+}
+
+.cal-nav button.off {
+  color: var(--muted);
+}
+
 .cal-days {
   flex: 1;
   min-height: 0;
@@ -345,7 +376,7 @@ body[data-view] .view-toggle {
   text-align: center;
 }
 
-.cal-day:first-child .cal-day-name {
+.cal-day.today .cal-day-name {
   color: var(--accent);
 }
 

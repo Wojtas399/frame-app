@@ -31,7 +31,7 @@ export function dayKey(date, timeZone) {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
-function addDays(key, n) {
+export function addDays(key, n) {
   const d = new Date(`${key}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
@@ -78,6 +78,15 @@ export function monthDays(today) {
 }
 
 // One fetch covers every span, so switching spans works offline.
+export function addMonths(key, n) {
+  const [year, month] = key.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1 + n, 1)).toISOString().slice(0, 10);
+}
+
+export const windowOf = (days) => ({ from: days[0], days: days.length });
+const lastDay = ({ from, days }) => addDays(from, days - 1);
+export const covers = (outer, inner) => outer.from <= inner.from && lastDay(inner) <= lastDay(outer);
+
 export function feedWindow(today) {
   const month = monthDays(today);
   return { from: month[0], days: daysBetween(month[0], later(month.at(-1), addDays(today, 6))) + 1 };

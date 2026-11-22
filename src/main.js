@@ -2,7 +2,26 @@ import './style.css';
 import { config, accounts, t } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
-import { ALL, calEvents, dayKey, dayLayout, daysAhead, eventsOnDay, feedWindow, fetchFeed, isFeed, minuteOf, monthDays, plainText, selectEvents, selectionOptions } from './calendar.js';
+import {
+  ALL,
+  addDays,
+  addMonths,
+  calEvents,
+  covers,
+  dayKey,
+  dayLayout,
+  daysAhead,
+  eventsOnDay,
+  feedWindow,
+  fetchFeed,
+  isFeed,
+  minuteOf,
+  monthDays,
+  plainText,
+  selectEvents,
+  selectionOptions,
+  windowOf,
+} from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
@@ -12,6 +31,8 @@ const CALENDAR_EVERY_MS = 10 * 60 * 1000;
 const FEEDS_KEY = 'calendar-v1';
 const PREFS_KEY = 'calendar-view-v1';
 const DETAILS_MS = 60 * 1000;
+// After this long without a tap, a calendar moved to other dates comes back to today.
+const NAV_IDLE_MS = 2 * 60 * 1000;
 
 const $ = (id) => document.getElementById(id);
 let weather = loadCached();
@@ -30,7 +51,7 @@ function renderClock() {
   const now = new Date();
   $('time').textContent = $('cal-time').textContent = hm(now);
   $('seconds').textContent = fmt({ second: '2-digit' }, now).padStart(2, '0');
-  $('date').textContent = $('cal-date').textContent = longDate(now);
+  $('date').textContent = longDate(now);
 }
 
 const deg = (t) => `${Math.round(t)}°`;
@@ -143,13 +164,34 @@ function store(key, value) {
 
 const options = selectionOptions(accounts);
 const colorOf = Object.fromEntries(accounts.map((a) => [a.id, a.color]));
+const noon = (key) => new Date(`${key}T12:00Z`);
+const utcFmt = (options) => new Intl.DateTimeFormat(config.locale, { timeZone: 'UTC', ...options });
+// shift moves today by n spans, days lists the days a span shows from that anchor, title names them.
 const SPANS = {
-  month: { label: t.month, render: monthHtml },
-  week: { label: t.week, render: weekHtml },
-  day: { label: t.day, render: dayHtml },
+  month: {
+    label: t.month,
+    render: monthHtml,
+    shift: (today, n) => (n ? addMonths(today, n) : today),
+    days: monthDays,
+    title: (anchor) => utcFmt({ month: 'long', year: 'numeric' }).format(noon(anchor)),
+  },
+  week: {
+    label: t.week,
+    render: weekHtml,
+    shift: (today, n) => addDays(today, 7 * n),
+    days: (anchor) => daysAhead(anchor, 7),
+    title: (anchor) => utcFmt({ day: 'numeric', month: 'long' }).formatRange(noon(anchor), noon(addDays(anchor, 6))),
+  },
+  day: { label: t.day, render: dayHtml, shift: addDays, days: (anchor) => [anchor], title: (anchor) => dayDate(anchor) },
 };
 const feeds = loadFeeds();
 const prefs = loadPrefs();
+// How many spans the calendar is moved from today. Not saved, so a reload shows today.
+let offset = 0;
+// The fetched feeds, which cover every span around today, then the other date ranges fetched on demand, by `from/days`.
+const home = { events: feeds };
+const ranges = new Map();
+let homeStatus = ['', false];
 
 function loadFeeds() {
   const saved = load(FEEDS_KEY);
@@ -171,9 +213,8 @@ function showView() {
 }
 
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const dayName = (key, i) =>
-  [t.today, t.tomorrow][i] ??
-  new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${key}T12:00Z`));
+const dayName = (key, today) =>
+  key === today ? t.today : key === addDays(today, 1) ? t.tomorrow : utcFmt({ weekday: 'short', day: 'numeric' }).format(noon(key));
 
 const isLight = (hex) => {
   const n = parseInt(hex.slice(1), 16);
@@ -204,12 +245,44 @@ const zonedToday = () => `${timeZone()} ${dayKey(new Date(), timeZone())}`;
 let renderedFor;
 let shown = [];
 
+function rangeOf(win) {
+  if (covers(feedWindow(dayKey(new Date(), timeZone())), win)) return home;
+  const key = `${win.from}/${win.days}`;
+  const range = ranges.get(key) ?? {};
+  if (!range.pending && !(Date.now() - range.at < (range.failed ? RETRY_MS : CALENDAR_EVERY_MS))) loadRange(key, win, range);
+  return ranges.get(key);
+}
+
+async function loadRange(key, win, old) {
+  ranges.set(key, { ...old, events: old.events ?? {}, pending: true });
+  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url, win)));
+  results.forEach((r, i) => r.status === 'rejected' && console.error(`${accounts[i].label} calendar:`, r.reason));
+  const events = Object.fromEntries(
+    accounts.map((a, i) => [a.id, results[i].status === 'fulfilled' ? { events: results[i].value } : old.events?.[a.id]]).filter(([, feed]) => feed),
+  );
+  ranges.set(key, { at: Date.now(), failed: results.some((r) => r.status === 'rejected'), events });
+  renderCalendar();
+}
+
+function rangeStatus(range) {
+  if (range === home) return homeStatus;
+  if (!range.at) return [t.loading, false];
+  return range.failed ? [t.rangeFailed, true] : [t.updated(hm(new Date(range.at))), false];
+}
+
 function renderCalendar() {
   renderedFor = zonedToday();
+  const today = dayKey(new Date(), timeZone());
+  const span = SPANS[prefs.span];
+  const anchor = span.shift(today, offset);
+  const range = rangeOf(windowOf(span.days(anchor)));
   shown = selectEvents(
-    accounts.flatMap((a) => (feeds[a.id] ? calEvents(feeds[a.id].events, a.id, timeZone()) : [])),
+    accounts.flatMap((a) => (range.events[a.id] ? calEvents(range.events[a.id].events, a.id, timeZone()) : [])),
     prefs.selected,
   );
+  $('cal-date').textContent = offset ? span.title(anchor) : longDate(new Date());
+  $('cal-nav').innerHTML = `<button data-step="-1">‹</button><button data-step="0"${offset ? '' : ' class="off"'}>${t.today}</button><button data-step="1">›</button>`;
+  setStatus(...rangeStatus(range), 'cal-status');
   $('cal-spans').innerHTML = Object.entries(SPANS)
     .map(([id, s]) => `<button class="cal-span${id === prefs.span ? ' on' : ''}" data-span="${id}">${s.label}</button>`)
     .join('');
@@ -218,27 +291,27 @@ function renderCalendar() {
     .join('');
   const days = $('cal-days');
   days.dataset.span = prefs.span;
-  days.innerHTML = SPANS[prefs.span].render(dayKey(new Date(), timeZone()));
+  days.innerHTML = span.render(anchor, today);
   fitCells(days);
   scrollTimeline(days);
   if ($('day-preview').open) fillDayPreview($('day-preview').dataset.day);
 }
 
-function weekHtml(today) {
-  return daysAhead(today, 7)
-    .map((key, i) => {
+function weekHtml(anchor, today) {
+  return daysAhead(anchor, 7)
+    .map((key) => {
       const list = eventsOnDay(shown, key);
-      return `<div class="cal-day">
-        <div class="cal-day-name">${dayName(key, i)}</div>
+      return `<div class="cal-day${key === today ? ' today' : ''}">
+        <div class="cal-day-name">${dayName(key, today)}</div>
         <div class="cal-events">${list.length ? list.map((e) => eventHtml(e, key)).join('') : `<div class="cal-free">${t.free}</div>`}</div>
       </div>`;
     })
     .join('');
 }
 
-function monthHtml(today) {
-  const days = monthDays(today);
-  const month = today.slice(0, 7);
+function monthHtml(anchor, today) {
+  const days = monthDays(anchor);
+  const month = anchor.slice(0, 7);
   const state = (key) => (key === today ? ' today' : key < today || !key.startsWith(month) ? ' dim' : '');
   return [
     ...days.slice(0, 7).map((key) => `<div class="cal-weekday">${weekday(key)}</div>`),
@@ -357,8 +430,8 @@ async function refreshCalendar() {
     else console.error(`${a.label} calendar:`, r.reason);
   });
   store(FEEDS_KEY, feeds);
+  homeStatus = [calendarStatus(failed), failed.length > 0];
   renderCalendar();
-  setStatus(calendarStatus(failed), failed.length > 0, 'cal-status');
 }
 
 // Reload when a new version is deployed, so a push to GitHub shows up on the frame by itself.
@@ -397,12 +470,25 @@ if (accounts.length) {
     $(id).addEventListener('click', (e) => {
       const option = e.target.closest(`[data-${attr}]`);
       if (!option) return;
+      if (pref === 'span') offset = 0;
       prefs[pref] = option.dataset[attr];
       store(PREFS_KEY, prefs);
       renderCalendar();
     });
   choose('cal-accounts', 'account', 'selected');
   choose('cal-spans', 'span', 'span');
+  $('cal-nav').addEventListener('click', (e) => {
+    const button = e.target.closest('[data-step]');
+    if (!button) return;
+    const step = Number(button.dataset.step);
+    offset = step ? offset + step : 0;
+    renderCalendar();
+  });
+  let navTimer;
+  document.addEventListener('click', () => {
+    clearTimeout(navTimer);
+    if (offset) navTimer = setTimeout(() => ((offset = 0), renderCalendar()), NAV_IDLE_MS);
+  });
   // A month cell is too small to aim at one event, so a tap anywhere in it opens the day.
   const openEvent = (e) => {
     const chip = e.target.closest('[data-event]');
