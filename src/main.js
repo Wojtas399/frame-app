@@ -1,12 +1,16 @@
 import './style.css';
-import { config } from './config.js';
+import { config, accounts } from './config.js';
 import { fetchWeather, describe } from './weather.js';
 import { icon } from './icons.js';
+import { ALL, calEvents, dayKey, daysAhead, eventsOnDay, fetchFeed, isFeed, selectEvents, selectionOptions } from './calendar.js';
 
 const WEATHER_EVERY_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
 const VERSION_EVERY_MS = 5 * 60 * 1000;
 const CACHE_KEY = 'weather-v1';
+const CALENDAR_EVERY_MS = 10 * 60 * 1000;
+const FEEDS_KEY = 'calendar-v1';
+const PREFS_KEY = 'calendar-view-v1';
 
 const $ = (id) => document.getElementById(id);
 let weather = loadCached();
@@ -18,11 +22,13 @@ function fmt(options, date = new Date()) {
   return new Intl.DateTimeFormat(config.locale, { timeZone: timeZone(), ...options }).format(date);
 }
 
+const hm = (date) => fmt({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }, date);
+
 function renderClock() {
   const now = new Date();
-  $('time').textContent = fmt({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }, now);
+  $('time').textContent = $('cal-time').textContent = hm(now);
   $('seconds').textContent = fmt({ second: '2-digit' }, now).padStart(2, '0');
-  $('date').textContent = fmt({ weekday: 'long', day: 'numeric', month: 'long' }, now);
+  $('date').textContent = $('cal-date').textContent = fmt({ weekday: 'long', day: 'numeric', month: 'long' }, now);
 }
 
 const deg = (t) => `${Math.round(t)}°`;
@@ -81,8 +87,8 @@ function renderWeather() {
     .join('');
 }
 
-function setStatus(text, isError = false) {
-  const el = $('status');
+function setStatus(text, isError = false, id = 'status') {
+  const el = $(id);
   el.textContent = text;
   el.classList.toggle('error', isError);
 }
@@ -119,6 +125,100 @@ function saveCached(w) {
   } catch {}
 }
 
+function load(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key));
+  } catch {
+    return null;
+  }
+}
+
+function store(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+const options = selectionOptions(accounts);
+const colorOf = Object.fromEntries(accounts.map((a) => [a.id, a.color]));
+const feeds = loadFeeds();
+const prefs = loadPrefs();
+
+function loadFeeds() {
+  const saved = load(FEEDS_KEY);
+  return Object.fromEntries(accounts.filter((a) => saved?.[a.id]?.url === a.url && isFeed(saved[a.id].events)).map((a) => [a.id, saved[a.id]]));
+}
+
+function loadPrefs() {
+  const saved = load(PREFS_KEY);
+  return {
+    view: saved?.view === 'calendar' ? 'calendar' : 'weather',
+    selected: options.some((o) => o.id === saved?.selected) ? saved.selected : ALL,
+  };
+}
+
+function showView() {
+  document.body.dataset.view = prefs.view;
+  $('view-toggle').textContent = prefs.view === 'calendar' ? 'Weather' : 'Calendar';
+}
+
+const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const dayName = (key, i) =>
+  ['Today', 'Tomorrow'][i] ??
+  new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${key}T12:00Z`));
+
+function eventHtml(e, key) {
+  const style = `style="--c: ${colorOf[e.account]}"`;
+  if (e.allDay) return `<div class="cal-chip" ${style}>${escapeHtml(e.title)}</div>`;
+  const when = key === e.startDay ? hm(e.start) : key === e.endDay ? `to ${hm(e.end)}` : 'all day';
+  return `<div class="cal-event" ${style}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
+}
+
+const zonedToday = () => `${timeZone()} ${dayKey(new Date(), timeZone())}`;
+let renderedFor;
+
+function renderCalendar() {
+  renderedFor = zonedToday();
+  const events = selectEvents(
+    accounts.flatMap((a) => (feeds[a.id] ? calEvents(feeds[a.id].events, a.id, timeZone()) : [])),
+    prefs.selected,
+  );
+  $('cal-accounts').innerHTML = options
+    .map((o) => `<button class="cal-option${o.id === prefs.selected ? ' on' : ''}" data-account="${o.id}" style="--c: ${o.color ?? 'var(--text)'}">${o.label}</button>`)
+    .join('');
+  $('cal-days').innerHTML = daysAhead(dayKey(new Date(), timeZone()), 7)
+    .map((key, i) => {
+      const list = eventsOnDay(events, key);
+      return `<div class="cal-day">
+        <div class="cal-day-name">${dayName(key, i)}</div>
+        <div class="cal-events">${list.length ? list.map((e) => eventHtml(e, key)).join('') : '<div class="cal-free">Free</div>'}</div>
+      </div>`;
+    })
+    .join('');
+}
+
+function calendarStatus(failed) {
+  if (!failed.length) return `Updated ${hm()}`;
+  const cached = failed.filter((a) => feeds[a.id]);
+  const showing = cached.length ? ` · showing ${hm(new Date(Math.min(...cached.map((a) => feeds[a.id].at))))} data` : '';
+  if (failed.length < accounts.length) return `${failed.map((a) => a.label).join(', ')} calendar failed${showing}`;
+  return cached.length ? `Offline${showing}` : 'Waiting for calendar…';
+}
+
+async function refreshCalendar() {
+  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url)));
+  const failed = accounts.filter((a, i) => results[i].status === 'rejected');
+  setTimeout(refreshCalendar, failed.length ? RETRY_MS : CALENDAR_EVERY_MS);
+  results.forEach((r, i) => {
+    const a = accounts[i];
+    if (r.status === 'fulfilled') feeds[a.id] = { url: a.url, at: Date.now(), events: r.value };
+    else console.error(`${a.label} calendar:`, r.reason);
+  });
+  store(FEEDS_KEY, feeds);
+  renderCalendar();
+  setStatus(calendarStatus(failed), failed.length > 0, 'cal-status');
+}
+
 // Reload when a new version is deployed, so a push to GitHub shows up on the frame by itself.
 let loadedVersion;
 async function checkVersion() {
@@ -134,9 +234,30 @@ async function checkVersion() {
 
 renderClock();
 renderWeather();
-setInterval(renderClock, 1000);
+setInterval(() => {
+  renderClock();
+  if (accounts.length && zonedToday() !== renderedFor) renderCalendar();
+}, 1000);
 refreshWeather();
 checkVersion();
 setInterval(checkVersion, VERSION_EVERY_MS);
 // Tap anywhere to refresh the weather now.
 document.addEventListener('click', refreshWeather);
+
+if (accounts.length) {
+  $('view-toggle').addEventListener('click', () => {
+    prefs.view = prefs.view === 'calendar' ? 'weather' : 'calendar';
+    store(PREFS_KEY, prefs);
+    showView();
+  });
+  $('cal-accounts').addEventListener('click', (e) => {
+    const option = e.target.closest('[data-account]');
+    if (!option) return;
+    prefs.selected = option.dataset.account;
+    store(PREFS_KEY, prefs);
+    renderCalendar();
+  });
+  showView();
+  renderCalendar();
+  refreshCalendar();
+}

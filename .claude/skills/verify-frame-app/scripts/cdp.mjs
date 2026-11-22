@@ -8,14 +8,15 @@
 //   wait <js-expr> [timeoutMs]   poll until the expression is truthy (default 10000 ms)
 //   eval <js-expr>               print the JSON value of the expression
 //   tap <css-selector>           real mouse press+release at the element's centre
-//   text [file]                  innerText of the dashboard (to stdout, or a file under evidence/)
+//   text [file]                  innerText of the page, i.e. the visible view (to stdout, or a file under evidence/)
 //   screenshot <file>            PNG of the 1280x800 viewport, saved under evidence/
 //   offline on|off               emulate the frame losing / regaining the network
 //   block <url-pattern>          fail requests matching the pattern (e.g. '*api.open-meteo.com*')
 //   sleep <ms>
 //
-// Every request to api.open-meteo.com and version.json is appended to evidence/network.log, and
-// console messages and page errors to evidence/console.log.
+// Every request to api.open-meteo.com, version.json and a calendar feed (an Apps Script URL or a
+// fixtures/ file) is appended to evidence/network.log, and console messages and page errors to
+// evidence/console.log.
 import { readFileSync, appendFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
 
@@ -61,10 +62,12 @@ const send = (method, params = {}) =>
 const once = (method) => new Promise((ok) => listeners.push((m) => m.method === method && ok(m.params)));
 const stamp = () => new Date().toISOString();
 
-const watched = (url) => url.includes('api.open-meteo.com') || url.includes('version.json');
+const secret = (url) => /script\.google|googleusercontent/.test(url);
+const logged = (url) => (secret(url) ? `${new URL(url).origin}/… (feed URL hidden)` : url);
+const watched = (url) => /api\.open-meteo\.com|version\.json|script\.google|googleusercontent|\/fixtures\//.test(url);
 listeners.push(({ method, params }) => {
   if (method === 'Network.requestWillBeSent' && watched(params.request.url))
-    appendFileSync(out('network.log'), `${stamp()} REQ  ${params.requestId} ${params.request.url}\n`);
+    appendFileSync(out('network.log'), `${stamp()} REQ  ${params.requestId} ${logged(params.request.url)}\n`);
   if (method === 'Network.responseReceived' && watched(params.response.url))
     appendFileSync(out('network.log'), `${stamp()} RESP ${params.requestId} ${params.response.status}\n`);
   if (method === 'Network.loadingFailed')
@@ -115,7 +118,7 @@ const commands = {
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...ev });
   },
   async text(file) {
-    const t = await evaluate(`document.querySelector('.frame').innerText`);
+    const t = await evaluate('document.body.innerText');
     file ? writeFileSync(out(file), t + '\n') : console.log(t);
   },
   async screenshot(file) {
