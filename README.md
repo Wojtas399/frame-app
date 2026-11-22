@@ -89,6 +89,11 @@ The script reads the account's default calendar. To add other calendars, put the
 A deployment made before the script sent each event's location and description needs a **New version** the
 same way, or the frame shows events without them.
 
+Each event shows in its calendar's colour from Google Calendar, so you can tell the calendars apart.
+To change a colour, change it in Google Calendar. The frame picks it up at the next fetch. A script
+deployed before this change sends no colours, and the frame shows its events in the account colour
+until you deploy a new version.
+
 Tap **Calendar** in the top-left corner to switch to the calendar, and **Weather** to switch back.
 With both accounts set, a selector at the top shows **Private**, **Business**, or **All**. The frame
 remembers the view and the selection. It fetches the calendars every 10 minutes and keeps showing the

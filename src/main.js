@@ -169,8 +169,14 @@ const dayName = (key, i) =>
   [t.today, t.tomorrow][i] ??
   new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${key}T12:00Z`));
 
+const isLight = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 153;
+};
+
 function eventHtml(e, key) {
-  const attrs = `data-event="${shown.indexOf(e)}" style="--c: ${colorOf[e.account]}"`;
+  const c = e.color ?? colorOf[e.account];
+  const attrs = `data-event="${shown.indexOf(e)}" style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'})"`;
   if (e.allDay) return `<div class="cal-chip" ${attrs}>${escapeHtml(e.title)}</div>`;
   const when = key === e.startDay ? hm(e.start) : key === e.endDay ? t.until(hm(e.end)) : t.allDay;
   return `<div class="cal-event" ${attrs}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
@@ -212,13 +218,13 @@ let detailsTimer;
 function showDetails(e) {
   const description = plainText(e.description);
   const dialog = $('event-details');
-  dialog.innerHTML = `<div class="event-body" style="--c: ${colorOf[e.account]}">
+  dialog.innerHTML = `<div class="event-body" style="--c: ${e.color ?? colorOf[e.account]}">
     <div class="event-head">
       <div class="event-title">${escapeHtml(e.title)}</div>
       <button class="event-close">${t.close}</button>
     </div>
     <div class="event-when">${eventWhen(e)}</div>
-    <div class="event-account">${accounts.find((a) => a.id === e.account).label}</div>
+    <div class="event-account" style="--c: ${colorOf[e.account]}">${accounts.find((a) => a.id === e.account).label}</div>
     ${e.location ? `<div class="event-location">${escapeHtml(e.location)}</div>` : ''}
     ${description ? `<div class="event-description">${escapeHtml(description)}</div>` : ''}
   </div>`;
