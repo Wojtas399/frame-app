@@ -359,7 +359,7 @@ body[data-view] .view-toggle {
   padding: 0.3vh 0.6vw;
   border-radius: 0.6vw;
   background: var(--c);
-  color: var(--bg);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

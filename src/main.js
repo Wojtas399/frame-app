@@ -167,8 +167,14 @@ const dayName = (key, i) =>
   [t.today, t.tomorrow][i] ??
   new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${key}T12:00Z`));
 
+const isLight = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 153;
+};
+
 function eventHtml(e, key) {
-  const style = `style="--c: ${colorOf[e.account]}"`;
+  const c = e.color ?? colorOf[e.account];
+  const style = `style="--c: ${c}; --ink: var(${isLight(c) ? '--bg' : '--text'})"`;
   if (e.allDay) return `<div class="cal-chip" ${style}>${escapeHtml(e.title)}</div>`;
   const when = key === e.startDay ? hm(e.start) : key === e.endDay ? t.until(hm(e.end)) : t.allDay;
   return `<div class="cal-event" ${style}><span class="cal-event-time">${when}</span> ${escapeHtml(e.title)}</div>`;
