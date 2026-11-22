@@ -1,6 +1,6 @@
 # URL settings
 
-The frame's URL configures what it shows. `lat` and `lon` pick the weather location (and so the clock's timezone), `place` is the label under the clock, and `locale` sets the language of the dates and every label (`pl` is Polish, anything else is English). Without params it shows Warsaw in `en-GB`.
+The frame's URL configures what it shows. `lat` and `lon` pick the weather location (and so the clock's timezone), `place` is the label under the clock, and `locale` sets the language of the dates and every label (`pl` is Polish, anything else is English). Without params it shows Warsaw in `en-GB`. A location picked on the frame (see [Location](./location.md)) beats `lat`, `lon` and `place`, so these params only apply until someone picks one.
 
 ## Sub-features
 
@@ -24,6 +24,7 @@ Preconditions: baseline.
 ## Gotchas
 
 - Encode non-ASCII values in the URL (`Krak%C3%B3w`).
+- A saved `location-v1` hides these params. Run these recipes before [Location](./location.md) in a run, or launch a fresh run.
 - `place` is only a label. It does not geocode, so a wrong `place` with the right `lat`/`lon` still shows the right weather.
 - The cache is matched to one decimal place of `lat`/`lon`. Two nearby points share it until the refresh finishes.
 - Locale output comes from desktop Chrome's ICU. The frame's WebView 107 may abbreviate weekdays differently.

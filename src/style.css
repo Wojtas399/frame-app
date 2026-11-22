@@ -68,9 +68,24 @@ body {
 }
 
 .place {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  padding: 1vh 0;
+  border: 0;
+  outline: none;
+  background: none;
+  font: inherit;
   font-size: 2vw;
   color: var(--muted);
-  margin-top: 0.5vh;
+  cursor: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.place svg {
+  width: 0.9em;
+  height: 0.9em;
 }
 
 /* Current weather */
@@ -230,7 +245,9 @@ body[data-view] .view-toggle {
 .cal-option,
 .cal-span,
 .cal-nav button,
-.event-close {
+.event-close,
+.location-search,
+.location-result {
   border: 0;
   outline: none;
   font: inherit;
@@ -669,6 +686,56 @@ body[data-view] .view-toggle {
   font-size: 1.4vw;
   white-space: pre-line;
   overflow-wrap: anywhere;
+}
+
+.location-picker {
+  margin-top: 5vh;
+}
+
+.location-body {
+  --c: var(--accent);
+}
+
+.location-search {
+  height: 7vh;
+  padding: 0 1.2vw;
+  border-radius: 0.8vw;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 2vw;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.location-search::placeholder {
+  color: var(--muted);
+}
+
+.location-results {
+  display: flex;
+  flex-direction: column;
+}
+
+.location-result {
+  display: flex;
+  align-items: baseline;
+  gap: 1vw;
+  padding: 1.8vh 0.4vw;
+  border-top: 1px solid rgba(138, 148, 168, 0.25);
+  background: none;
+  color: var(--text);
+  font-size: 2vw;
+  text-align: left;
+}
+
+.location-detail,
+.location-note {
+  color: var(--muted);
+  font-size: 1.5vw;
+}
+
+.location-note {
+  padding: 1.8vh 0.4vw;
 }
 
 .day-preview {

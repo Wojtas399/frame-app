@@ -5,7 +5,7 @@ description: Launch and drive the frame-app clock, weather and calendar dashboar
 
 # Verify frame-app
 
-frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a calendar view with a month, week (7 days) or day span, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the calendar's view pill, span switcher and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
+frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a calendar view with a month, week (7 days) or day span, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the place name (opens a location search), the calendar's view pill, span switcher and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
 
 All helpers live in `.claude/skills/verify-frame-app/scripts/`. Run them from the repo root:
 
@@ -50,6 +50,7 @@ Commands run in order over one CDP session:
 | `wait <js-expr> [ms]` | poll until truthy (default 10000 ms). Use this, not `sleep`, to wait for state. Wait for a change, not for a state that was already true |
 | `eval <js-expr>` | print the JSON value. For reading DOM state only, never to call app functions |
 | `tap <css>` | real mouse press and release at the element's centre (the user's tap) |
+| `type <css> <text>` | tap the element, then type the text into it (fires `input` events) |
 | `text [file]` | `innerText` of the page, which is the visible view |
 | `screenshot <file>` | 1280x800 PNG |
 | `offline on\|off` | emulate the frame losing Wi-Fi |
@@ -60,7 +61,9 @@ Commands run in order over one CDP session:
 
 Stable handles (ids from `index.html` and classes `src/main.js` renders):
 
-- `#date`, `#time`, `#seconds`, `#place`: the clock
+- `#date`, `#time`, `#seconds`, `#place`: the clock. `#place` is a button that opens `#location-picker`
+- `#location-picker` (a `<dialog>`): `#location-search`, `#location-close`, and `#location-results` holding `.location-result[data-place=N]` rows or a `.location-note`
+- localStorage key `location-v1`: the location picked on the frame, `{ name, lat, lon }`
 - `#now`: current conditions. Inside it are `.now-temp`, `.now-label`, `.now-range` and `.now-details` (Feels like, Wind, Humidity, Sun)
 - `#hours .hour` (8 of them): `.hour-time`, `.hour-temp`, `.rain` (`.rain.likely` when ≥30%)
 - `#days .day` (5 of them, starting tomorrow): `.day-name`, `.day-temps .hi`, `.day-temps .lo`, `.rain`

@@ -30,6 +30,10 @@ export const STRINGS = {
     business: 'Business',
     all: 'All',
     close: 'Close',
+    location: 'Weather location',
+    searchPlace: 'Search for a city',
+    noPlaces: 'No places found',
+    searchFailed: 'Search failed',
     unknown: 'Unknown',
     conditions: {
       0: 'Clear',
@@ -92,6 +96,10 @@ export const STRINGS = {
     business: 'Służbowy',
     all: 'Wszystkie',
     close: 'Zamknij',
+    location: 'Lokalizacja pogody',
+    searchPlace: 'Wyszukaj miasto',
+    noPlaces: 'Nie znaleziono miejsc',
+    searchFailed: 'Błąd wyszukiwania',
     unknown: 'Nieznana',
     conditions: {
       0: 'Bezchmurnie',

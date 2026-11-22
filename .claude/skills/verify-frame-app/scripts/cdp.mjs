@@ -8,6 +8,7 @@
 //   wait <js-expr> [timeoutMs]   poll until the expression is truthy (default 10000 ms)
 //   eval <js-expr>               print the JSON value of the expression
 //   tap <css-selector>           real mouse press+release at the element's centre
+//   type <css-selector> <text>   tap the element, then type the text into it (fires `input` events)
 //   text [file]                  innerText of the page, i.e. the visible view (to stdout, or a file under evidence/)
 //   screenshot <file>            PNG of the 1280x800 viewport, saved under evidence/
 //   offline on|off               emulate the frame losing / regaining the network
@@ -116,6 +117,10 @@ const commands = {
     const ev = { x: box.x, y: box.y, button: 'left', clickCount: 1 };
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...ev });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...ev });
+  },
+  async type(selector, text) {
+    await commands.tap(selector);
+    await send('Input.insertText', { text });
   },
   async text(file) {
     const t = await evaluate('document.body.innerText');

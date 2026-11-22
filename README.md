@@ -54,6 +54,9 @@ URL query parameters override the defaults in `src/config.js`:
 `locale` sets the language of the dates and the labels. `pl` gives Polish text and any other language gives English.
 The labels live in `src/strings.js`.
 
+Tap the place name under the clock to change the weather location. Type at least two letters of a city,
+then tap it in the list. The frame remembers the choice, and it beats the `lat`, `lon` and `place` params.
+
 Tap anywhere to refresh the weather now.
 
 ## Calendar

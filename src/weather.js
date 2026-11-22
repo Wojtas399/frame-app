@@ -1,4 +1,4 @@
-import { t } from './config.js';
+import { config, t } from './config.js';
 
 // Open-Meteo: free, no API key. https://open-meteo.com/en/docs
 export async function fetchWeather({ lat, lon }) {
@@ -15,6 +15,15 @@ export async function fetchWeather({ lat, lon }) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Weather request failed: ${res.status}`);
   return res.json();
+}
+
+export async function searchPlaces(name) {
+  const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
+  url.search = new URLSearchParams({ name, count: '6', language: config.locale.split('-')[0], format: 'json' });
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Place search failed: ${res.status}`);
+  const { results = [] } = await res.json();
+  return results.map((r) => ({ name: r.name, lat: r.latitude, lon: r.longitude, detail: [r.admin1, r.country].filter(Boolean).join(', ') }));
 }
 
 // WMO weather interpretation codes -> icon. Labels live in strings.js.

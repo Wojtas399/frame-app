@@ -10,7 +10,7 @@
       <section class="clock">
         <div class="date" id="date"></div>
         <div class="time"><span id="time"></span><span class="seconds" id="seconds"></span></div>
-        <div class="place" id="place"></div>
+        <button class="place" id="place"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6a2.6 2.6 0 1 1 0-5.2 2.6 2.6 0 0 1 0 5.2z" fill="currentColor"/></svg></button>
       </section>
 
       <section class="now" id="now" aria-live="polite"></section>
@@ -32,6 +32,16 @@
     <button class="view-toggle" id="view-toggle"></button>
     <dialog class="day-preview" id="day-preview"></dialog>
     <dialog class="event-details" id="event-details"></dialog>
+    <dialog class="event-details location-picker" id="location-picker">
+      <div class="event-body location-body">
+        <div class="event-head">
+          <div class="event-title" id="location-title"></div>
+          <button class="event-close" id="location-close"></button>
+        </div>
+        <input class="location-search" id="location-search" type="text" autocomplete="off" spellcheck="false" />
+        <div class="location-results" id="location-results"></div>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
