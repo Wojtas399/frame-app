@@ -34,6 +34,10 @@ const DETAILS_MS = 60 * 1000;
 const SEARCH_DELAY_MS = 300;
 // After this long without a tap, a calendar moved to other dates comes back to today.
 const NAV_IDLE_MS = 2 * 60 * 1000;
+// Between these hours the frame dims itself after this long without a tap.
+const NIGHT_FROM_H = 22;
+const NIGHT_TO_H = 6;
+const NIGHT_IDLE_MS = 2 * 60 * 1000;
 
 const $ = (id) => document.getElementById(id);
 let weather = loadCached();
@@ -50,7 +54,7 @@ const longDate = (date, zone = timeZone()) => fmt({ weekday: 'long', day: 'numer
 
 function renderClock() {
   const now = new Date();
-  $('time').textContent = $('cal-time').textContent = hm(now);
+  $('time').textContent = $('cal-time').textContent = $('night-time').textContent = hm(now);
   $('seconds').textContent = fmt({ second: '2-digit' }, now).padStart(2, '0');
   $('date').textContent = longDate(now);
 }
@@ -499,10 +503,35 @@ $('location-picker').addEventListener('click', (e) => {
   } else if (e.target === e.currentTarget || e.target.closest('#location-close')) e.currentTarget.close();
 });
 
+let night = false;
+let lastTouch = Date.now();
+function setNight(on) {
+  night = on;
+  document.body.toggleAttribute('data-night', on);
+  // Dialogs sit in the top layer, above the night screen.
+  if (on) document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+}
+
+function inNightHours() {
+  const m = minuteOf(new Date(), timeZone());
+  return m >= NIGHT_FROM_H * 60 || m < NIGHT_TO_H * 60;
+}
+
+$('night-button').textContent = t.night;
+$('night-button').addEventListener('click', (e) => {
+  e.stopPropagation();
+  setNight(true);
+});
+// The waking tap also reaches the document, so it refreshes the weather.
+$('night').addEventListener('click', () => setNight(false));
+// Capture, because dialogs stop their clicks before they reach the document.
+document.addEventListener('pointerdown', () => (lastTouch = Date.now()), true);
+
 renderClock();
 renderWeather();
 setInterval(() => {
   renderClock();
+  if (!night && inNightHours() && Date.now() - lastTouch >= NIGHT_IDLE_MS) setNight(true);
   if (accounts.length && zonedToday() !== renderedFor) renderCalendar();
 }, 1000);
 refreshWeather();

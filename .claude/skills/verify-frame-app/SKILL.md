@@ -5,7 +5,7 @@ description: Launch and drive the frame-app clock, weather and calendar dashboar
 
 # Verify frame-app
 
-frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a calendar view with a month, week (7 days) or day span, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the place name (opens a location search), the calendar's view pill, span switcher and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
+frame-app is one page (`index.html` + `src/`) that shows a clock, current weather, 8 hourly and 5 daily forecasts from Open-Meteo (live, no API key). With `cal-` URL params it also has a calendar view with a month, week (7 days) or day span, fed by fixture files in `fixtures/` here. Its user inputs are a tap anywhere (refreshes the weather), the **Night** pill, the place name (opens a location search), the calendar's view pill, span switcher and account selector, and URL query params. The real target is a WebView 107 kiosk on an Android photo frame. This skill drives desktop Chrome at the same 1280x800 viewport instead. Reaching the physical frame needs `npm run frame` with the frame on USB (adb), which agents cannot assume. Say so when a change depends on WebView 107 behaviour.
 
 All helpers live in `.claude/skills/verify-frame-app/scripts/`. Run them from the repo root:
 
@@ -69,6 +69,8 @@ Stable handles (ids from `index.html` and classes `src/main.js` renders):
 - `#days .day` (5 of them, starting tomorrow): `.day-name`, `.day-temps .hi`, `.day-temps .lo`, `.rain`
 - `#status`: `Updated HH:MM`, `Offline · showing HH:MM data` or `Waiting for weather…`. It has class `error` when not updated
 - localStorage key `weather-v1`: the cached Open-Meteo response
+- `#night-button`: the **Night** pill (`Noc` in Polish), always shown, right of `#view-toggle` in `.corner`. A tap sets `data-night` on `body`
+- `#night`: the full-screen night overlay, shown only while `body` has `data-night`. `#night-time` inside it holds `HH:MM`. A tap on it removes `data-night`
 - `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without a `cal-` param
 - `#cal-spans .cal-span[data-span=month|week|day]`: the span switcher. The chosen one has class `on`, and `#cal-days` has `data-span` set to it
 - `#cal-accounts .cal-option[data-account=private|business|all]`: the selector (only with both params). The selected one has class `on`
