@@ -71,9 +71,9 @@ Stable handles (ids from `index.html` and classes `src/main.js` renders):
 - localStorage key `weather-v1`: the cached Open-Meteo response
 - `#night-button`: the **Night** pill (`Noc` in Polish), always shown, right of `#view-toggle` in `.corner`. A tap sets `data-night` on `body`
 - `#night`: the full-screen night overlay, shown only while `body` has `data-night`. `#night-time` inside it holds `HH:MM`. A tap on it removes `data-night`
-- `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without a `cal-` param
+- `#view-toggle`: the pill that swaps views. It reads `Calendar` or `Weather`, and it is hidden without a `cal-` or `intervals` param. `document.body.dataset.view` is `weather` or `calendar`, and unset without one
 - `#cal-spans .cal-span[data-span=month|week|day]`: the span switcher. The chosen one has class `on`, and `#cal-days` has `data-span` set to it
-- `#cal-accounts .cal-option[data-account=private|business|all]`: the selector (only with both params). The selected one has class `on`
+- `#cal-accounts .cal-option[data-account=private|business|training|all]`: the selector (only with two or more of `cal-private`, `cal-business`, `intervals`). The selected one has class `on`. `training` comes from the live Intervals.icu API and needs the user's `intervals=<athlete id>:<API key>` param, which no fixture stands in for
 - `#cal-date`, `#cal-time`: the calendar header
 - Week span, `#cal-days .cal-day` (7 of them, starting today): `.cal-day-name`, then `.cal-events` holding `.cal-chip` (all-day), `.cal-event` with `.cal-event-time` (timed), or `.cal-free`. Each event's `style` sets `--c` to its calendar colour, or its account colour when the feed has none
 - Month span: 7 `.cal-weekday` headers, then `.cal-cell` per day (`.dim` for past days and days outside the month, `.today` for today) holding `.cal-cell-num` and `.cal-cell-events` with `.cal-chip`, `.cal-event` and a last `.cal-more` (`+N more`)

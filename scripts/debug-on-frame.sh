@@ -1,13 +1,14 @@
 #!/bin/sh
 # Run the app from this Mac's dev server on the frame, with live reload and Chrome DevTools.
 # Needs the frame on USB (adb) and on the same Wi-Fi as this Mac. Ctrl+C to stop.
-# Calendar feed URLs and the language come from the gitignored .env (CAL_PRIVATE, CAL_BUSINESS, LOCALE).
+# Calendar feed URLs, the Intervals.icu key and the language come from the gitignored .env (CAL_PRIVATE, CAL_BUSINESS, INTERVALS, LOCALE).
 set -eu
 cd "$(dirname "$0")/.."
 PORT=5173
 IP="$(ipconfig getifaddr en0 || ipconfig getifaddr en1)"
 CAL_PRIVATE=""
 CAL_BUSINESS=""
+INTERVALS=""
 LOCALE="pl-PL"
 if [ -f .env ]; then
   set -a
@@ -18,8 +19,9 @@ QUERY="$(node -e '
   const q = new URLSearchParams({ locale: process.argv[3] });
   if (process.argv[1]) q.set("cal-private", process.argv[1]);
   if (process.argv[2]) q.set("cal-business", process.argv[2]);
+  if (process.argv[4]) q.set("intervals", process.argv[4]);
   console.log(`?${q}`);
-' "$CAL_PRIVATE" "$CAL_BUSINESS" "$LOCALE")"
+' "$CAL_PRIVATE" "$CAL_BUSINESS" "$LOCALE" "$INTERVALS")"
 URL="http://$IP:$PORT/$QUERY"
 
 adb get-state >/dev/null

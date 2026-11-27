@@ -32,10 +32,11 @@ root. It is gitignored, so the URLs stay on this Mac:
 ```sh
 CAL_PRIVATE='https://script.google.com/macros/s/…/exec'
 CAL_BUSINESS='https://script.google.com/macros/s/…/exec'
+INTERVALS='i123456:<API key>'
 ```
 
 Keep the single quotes, and leave out a line for an account you don't use. `npm run frame` adds them to the frame's URL as
-`cal-private` and `cal-business`.
+`cal-private`, `cal-business` and `intervals`.
 
 `npm run frame` shows the frame in Polish (`locale=pl-PL`). For English, add `LOCALE='en-GB'` to `.env`.
 
@@ -50,6 +51,7 @@ URL query parameters override the defaults in `src/config.js`:
 | `locale` | `en-GB` | `&locale=pl-PL` |
 | `cal-private` | none | `&cal-private=<URL-encoded /exec URL>` |
 | `cal-business` | none | `&cal-business=<URL-encoded /exec URL>` |
+| `intervals` | none | `&intervals=i123456%3A<API key>` |
 
 `locale` sets the language of the dates and the labels. `pl` gives Polish text and any other language gives English.
 The labels live in `src/strings.js`.
@@ -65,9 +67,9 @@ Tap anywhere to wake it, which also refreshes the weather.
 
 ## Calendar
 
-The frame can show this month, the next 7 days, or today from two Google accounts, Private and Business. Each account
-serves its events as JSON from its own Google Apps Script web app. Without a `cal-` param, the
-frame shows only the weather dashboard.
+The frame can show this month, the next 7 days, or today from two Google accounts, Private and Business, and from
+[Intervals.icu](#training). Each Google account serves its events as JSON from its own Google Apps Script web app.
+Without a `cal-` or `intervals` param, the frame shows only the weather dashboard.
 
 Set up each account once:
 
@@ -111,3 +113,15 @@ last data when it is offline.
 
 Tap an event to see its time, account, location, and description. Tap outside it or **Close** to go back. It
 also closes by itself after a minute.
+
+## Training
+
+With the `intervals` param, the calendar has a third account, Training, with the planned workouts and notes from
+[Intervals.icu](https://intervals.icu). A workout shows its planned duration first, then its name. A tap shows the
+duration, the training load and the coach's description. Notes such as rest days and nutrition are a darker green.
+
+The param is `<athlete id>:<API key>`. Both are in Intervals.icu under **Settings** > **Developer Settings**, and the
+athlete ID starts with `i`. URL-encode it with `node -p 'encodeURIComponent(process.argv[1])' 'i123456:<API key>'`.
+
+The frame calls the Intervals.icu API itself, with the key in an `Authorization` header. The key can also change your
+Intervals.icu account, so keep it in the frame's URL and `.env` only, never in this repository.
