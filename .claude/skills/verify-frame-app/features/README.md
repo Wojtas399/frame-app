@@ -34,6 +34,7 @@ Each feature file has an H1 and a one-paragraph description, then four H2s in or
 - [Refresh and offline](./refresh-offline.md): tap to refresh, status line, offline fallback, cached start.
 - [URL settings](./url-settings.md): `lat`, `lon`, `place`, `locale` query params.
 - [Location](./location.md): tap the place name, search a city, and pick it as the weather location.
+- [Night mode](./night-mode.md): the Night pill, the dim time-only screen, the 22:00–06:00 auto dim after 2 idle minutes, and tap to wake.
 - [Auto-update](./auto-update.md): the page reloads itself when a new build is deployed (preview mode only).
 - [Calendar](./calendar.md): the view pill, the Month, Week and Day switcher, the Private, Business and All selector, the month grid, 7 day columns, the day timeline, and the calendar's offline and failure statuses.
 

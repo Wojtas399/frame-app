@@ -59,6 +59,10 @@ then tap it in the list. The frame remembers the choice, and it beats the `lat`,
 
 Tap anywhere to refresh the weather now.
 
+Tap **Night** in the top-left corner to black out the screen and show only the time in dim grey. Between 22:00
+and 06:00 in the weather location's timezone, the frame does this by itself after 2 minutes without a tap.
+Tap anywhere to wake it, which also refreshes the weather.
+
 ## Calendar
 
 The frame can show this month, the next 7 days, or today from two Google accounts, Private and Business. Each account
