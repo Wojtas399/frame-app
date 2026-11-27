@@ -29,7 +29,10 @@
       <div class="status" id="cal-status"></div>
     </main>
 
-    <button class="view-toggle" id="view-toggle"></button>
+    <div class="corner">
+      <button class="view-toggle" id="view-toggle"></button>
+      <button class="night-button" id="night-button"></button>
+    </div>
     <dialog class="day-preview" id="day-preview"></dialog>
     <dialog class="event-details" id="event-details"></dialog>
     <dialog class="event-details location-picker" id="location-picker">
@@ -42,6 +45,7 @@
         <div class="location-results" id="location-results"></div>
       </div>
     </dialog>
+    <div class="night" id="night"><span id="night-time"></span></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
