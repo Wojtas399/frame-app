@@ -2,6 +2,8 @@
 //   ?lat=50.06&lon=19.94&place=Kraków
 // A location picked on the frame (localStorage `location-v1`) beats both.
 import { STRINGS } from './strings.js';
+import { fetchFeed } from './calendar.js';
+import { fetchTraining } from './training.js';
 
 const params = new URLSearchParams(location.search);
 const LOCATION_KEY = 'location-v1';
@@ -36,7 +38,11 @@ export const config = {
 
 export const t = STRINGS[config.locale.split('-')[0]] ?? STRINGS.en;
 
+// `url` names the source, so a cached feed is dropped when it changes. `fetch` loads a window of it as calendar feed events.
 export const accounts = [
-  { id: 'private', label: t.private, color: '#7cc4ff', url: params.get('cal-private') },
-  { id: 'business', label: t.business, color: '#ffad5a', url: params.get('cal-business') },
-].filter((a) => a.url);
+  { id: 'private', label: t.private, color: '#7cc4ff', url: params.get('cal-private'), fetch: fetchFeed },
+  { id: 'business', label: t.business, color: '#ffad5a', url: params.get('cal-business'), fetch: fetchFeed },
+  { id: 'training', label: t.training, color: '#5ee08a', url: params.get('intervals'), fetch: fetchTraining },
+]
+  .filter((a) => a.url)
+  .map(({ fetch, ...a }) => ({ ...a, fetch: (win) => fetch(a.url, win) }));

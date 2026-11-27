@@ -13,7 +13,6 @@ import {
   daysAhead,
   eventsOnDay,
   feedWindow,
-  fetchFeed,
   isFeed,
   minuteOf,
   monthDays,
@@ -259,7 +258,7 @@ function rangeOf(win) {
 
 async function loadRange(key, win, old) {
   ranges.set(key, { ...old, events: old.events ?? {}, pending: true });
-  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url, win)));
+  const results = await Promise.allSettled(accounts.map((a) => a.fetch(win)));
   results.forEach((r, i) => r.status === 'rejected' && console.error(`${accounts[i].label} calendar:`, r.reason));
   const events = Object.fromEntries(
     accounts.map((a, i) => [a.id, results[i].status === 'fulfilled' ? { events: results[i].value } : old.events?.[a.id]]).filter(([, feed]) => feed),
@@ -456,7 +455,7 @@ function calendarStatus(failed) {
 
 async function refreshCalendar() {
   const range = feedWindow(dayKey(new Date(), timeZone()));
-  const results = await Promise.allSettled(accounts.map((a) => fetchFeed(a.url, range)));
+  const results = await Promise.allSettled(accounts.map((a) => a.fetch(range)));
   const failed = accounts.filter((a, i) => results[i].status === 'rejected');
   setTimeout(refreshCalendar, failed.length ? RETRY_MS : CALENDAR_EVERY_MS);
   results.forEach((r, i) => {
